@@ -3,7 +3,16 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 
 class AuthService {
+  // Singleton pattern implementation
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  // Sign-in progress tracking to prevent race conditions
+  bool _isSignInInProgress = false;
+  DateTime? _lastSignInAttempt;
   
   // Configure GoogleSignIn with web client ID
   final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -85,6 +94,12 @@ class AuthService {
 
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
+    // Prevent multiple simultaneous sign-in attempts
+    if (_isSignInInProgress) return null;
+    
+    _isSignInInProgress = true;
+    _lastSignInAttempt = DateTime.now();
+    
     try {
       if (kIsWeb) {
         // For web, use Firebase Auth popup directly to avoid deprecated signIn method
@@ -95,6 +110,8 @@ class AuthService {
       }
     } catch (e) {
       throw 'Google sign in failed: ${e.toString()}';
+    } finally {
+      _isSignInInProgress = false;
     }
   }
 
@@ -184,6 +201,15 @@ class AuthService {
   // Check for redirect result (call this in app initialization)
   Future<UserCredential?> checkRedirectResult() async {
     if (!kIsWeb) return null;
+    
+    // Don't check redirect if manual sign-in happened recently (within 5 seconds)
+    if (_lastSignInAttempt != null && 
+        DateTime.now().difference(_lastSignInAttempt!).inSeconds < 5) {
+      return null;
+    }
+    
+    // Don't check redirect if sign-in is already in progress
+    if (_isSignInInProgress) return null;
     
     try {
       return await _auth.getRedirectResult();
