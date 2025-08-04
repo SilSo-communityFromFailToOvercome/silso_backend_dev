@@ -1,4 +1,4 @@
-package com.example.mvp
+package com.silso.mvp
 
 import io.flutter.embedding.android.FlutterActivity
 

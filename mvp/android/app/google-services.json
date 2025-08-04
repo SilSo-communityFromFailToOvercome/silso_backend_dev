@@ -12,7 +12,12 @@
           "package_name": "com.example.mvp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "337349884372-k47h7h11pfuljssvug8bbfgjopkt5c39.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCkRrdxBod70mUucLHO23ekOBHknFXe2lg"
@@ -20,7 +25,63 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "337349884372-k47h7h11pfuljssvug8bbfgjopkt5c39.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "337349884372-5oallhr2acp9ngtdh494ec3gt57tpr9m.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mvp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:337349884372:android:8fa2c57bb18299f14a3e41",
+        "android_client_info": {
+          "package_name": "com.silso.mvp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "337349884372-pi0r5fu8b08ib7ev57k3msvvvjuou78l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.silso.mvp",
+            "certificate_hash": "1e6a2d48525babd0c9a56dd188dda3b44dd4fb82"
+          }
+        },
+        {
+          "client_id": "337349884372-k47h7h11pfuljssvug8bbfgjopkt5c39.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkRrdxBod70mUucLHO23ekOBHknFXe2lg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "337349884372-k47h7h11pfuljssvug8bbfgjopkt5c39.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "337349884372-5oallhr2acp9ngtdh494ec3gt57tpr9m.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mvp"
+              }
+            }
+          ]
         }
       }
     }
