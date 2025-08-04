@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -26,16 +25,6 @@ class AuthService {
   // Check if user is anonymous
   bool get isAnonymous => _auth.currentUser?.isAnonymous ?? false;
 
-  // Check if running on mobile browser
-  bool get _isMobileBrowser {
-    if (!kIsWeb) return false;
-    final userAgent = html.window.navigator.userAgent.toLowerCase();
-    return userAgent.contains('mobile') || 
-           userAgent.contains('android') || 
-           userAgent.contains('iphone') || 
-           userAgent.contains('ipad') ||
-           userAgent.contains('ipod');
-  }
 
   // Get user display name
   String getUserDisplayName() {
@@ -97,20 +86,19 @@ class AuthService {
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      if (kIsWeb && _isMobileBrowser) {
-        // For mobile web browsers, use Firebase Auth popup with better configuration
-        return await _signInWithGooglePopup();
+      if (kIsWeb) {
+        // For web, use Firebase Auth popup directly to avoid deprecated signIn method
+        return await _signInWithGoogleWeb();
       } else {
-        // For desktop web or mobile apps, use the standard flow
+        // For mobile platforms, use the standard GoogleSignIn flow
         return await _signInWithGoogleStandard();
       }
     } catch (e) {
-      print('Google sign in error: ${e.toString()}');
       throw 'Google sign in failed: ${e.toString()}';
     }
   }
 
-  // Standard Google Sign-In flow
+  // Standard Google Sign-In flow (for mobile)
   Future<UserCredential?> _signInWithGoogleStandard() async {
     // Trigger the authentication flow
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -133,36 +121,8 @@ class AuthService {
     return await _auth.signInWithCredential(credential);
   }
 
-  // Mobile-friendly popup sign-in
-  Future<UserCredential?> _signInWithGooglePopup() async {
-    try {
-      // Configure Google provider for popup
-      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      
-      // Add scopes
-      googleProvider.addScope('email');
-      googleProvider.addScope('openid');
-      googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-      
-      // Set custom parameters for mobile
-      googleProvider.setCustomParameters({
-        'login_hint': 'user@example.com',
-        'prompt': 'select_account',
-      });
-
-      // Sign in with popup (mobile-friendly)
-      final UserCredential result = await _auth.signInWithPopup(googleProvider);
-      
-      return result;
-    } catch (e) {
-      print('Popup sign-in error: ${e.toString()}');
-      // If popup fails, try redirect
-      return await _signInWithGoogleRedirect();
-    }
-  }
-
-  // Fallback: Redirect method for mobile
-  Future<UserCredential?> _signInWithGoogleRedirect() async {
+  // Web Google Sign-In flow using Firebase Auth popup
+  Future<UserCredential?> _signInWithGoogleWeb() async {
     try {
       final GoogleAuthProvider googleProvider = GoogleAuthProvider();
       
@@ -174,25 +134,24 @@ class AuthService {
       // Set custom parameters
       googleProvider.setCustomParameters({
         'prompt': 'select_account',
+        'login_hint': 'user@example.com',
       });
 
-      // Use redirect for mobile browsers
-      await _auth.signInWithRedirect(googleProvider);
-      
-      // Note: The result will be handled by getRedirectResult() after page reload
-      return null;
+      // Sign in with popup
+      final UserCredential result = await _auth.signInWithPopup(googleProvider);
+      return result;
     } catch (e) {
-      print('Redirect sign-in error: ${e.toString()}');
-      throw 'Failed to initiate Google sign-in redirect: ${e.toString()}';
+      throw 'Google sign-in failed: ${e.toString()}';
     }
   }
 
   // Check for redirect result (call this in app initialization)
   Future<UserCredential?> checkRedirectResult() async {
+    if (!kIsWeb) return null;
+    
     try {
       return await _auth.getRedirectResult();
     } catch (e) {
-      print('Redirect result error: ${e.toString()}');
       return null;
     }
   }

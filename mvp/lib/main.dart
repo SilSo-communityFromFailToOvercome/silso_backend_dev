@@ -49,15 +49,16 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   final authService = AuthService();
-  bool _isCheckingRedirect = true;
+  bool _hasCheckedRedirect = false;
+  bool _showSplash = true;
 
   @override
   void initState() {
     super.initState();
-    _checkRedirectResult();
+    _initializeApp();
   }
 
-  Future<void> _checkRedirectResult() async {
+  Future<void> _initializeApp() async {
     try {
       // Check for redirect result on web
       await authService.checkRedirectResult();
@@ -66,7 +67,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     } finally {
       if (mounted) {
         setState(() {
-          _isCheckingRedirect = false;
+          _hasCheckedRedirect = true;
         });
       }
     }
@@ -74,15 +75,31 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isCheckingRedirect) {
-      return const SplashScreen();
+    // If we haven't checked redirect results yet, show a loading state (not splash)
+    if (!_hasCheckedRedirect) {
+      return Container(
+        color: const Color(0xFF1E1E2E),
+        child: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6C5CE7)),
+          ),
+        ),
+      );
     }
     
     return StreamBuilder<User?>(
       stream: authService.authStateChanges,
       builder: (context, snapshot) {
-        // Show splash screen while checking authentication
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        // Show splash screen only on initial load
+        if (snapshot.connectionState == ConnectionState.waiting && _showSplash) {
+          // After splash screen completes, don't show it again
+          Future.delayed(const Duration(seconds: 10), () {
+            if (mounted) {
+              setState(() {
+                _showSplash = false;
+              });
+            }
+          });
           return const SplashScreen();
         }
         

@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.forward();
     
     // Navigate to login after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 60), () {
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/login');
       }
