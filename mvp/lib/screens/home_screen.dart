@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'community_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -116,6 +117,38 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                   ],
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Community Button
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const CommunityScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.people, color: Colors.white),
+                  label: const Text(
+                    'Join Community',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6C5CE7),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
                 ),
               ),
               

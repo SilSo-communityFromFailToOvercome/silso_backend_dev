@@ -6,6 +6,11 @@ import 'services/auth_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/community_screen.dart';
+import 'screens/community/category_selection_screen.dart';
+import 'screens/community/profile_information_screen.dart';
+import 'screens/community/phone_verification_screen.dart';
+import 'screens/community/policy_agreement_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +40,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const AuthWrapper(),
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
+        '/community': (context) => const CommunityScreen(),
       },
     );
   }
