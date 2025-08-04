@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/google_sign_in_button.dart';
+import '../widgets/kakao_login_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -271,6 +272,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(error)),
+                    );
+                  }
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Kakao Sign In Button
+              KakaoLoginButtonKorean(
+                isLoading: _isLoading,
+                onSuccess: () {
+                  if (mounted) {
+                    Navigator.of(context).pushReplacementNamed('/home');
+                  }
+                },
+                onError: (error) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(error),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                      ),
                     );
                   }
                 },

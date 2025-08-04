@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'korean_auth_service.dart';
 
 class AuthService {
   // Singleton pattern implementation
@@ -13,6 +14,9 @@ class AuthService {
   // Sign-in progress tracking to prevent race conditions
   bool _isSignInInProgress = false;
   DateTime? _lastSignInAttempt;
+  
+  // Korean authentication service
+  final KoreanAuthService _koreanAuth = KoreanAuthService();
   
   // Configure GoogleSignIn with web client ID
   final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -218,6 +222,34 @@ class AuthService {
     }
   }
 
+  // Kakao login wrapper
+  Future<UserCredential?> signInWithKakao() async {
+    try {
+      return await _koreanAuth.signInWithKakao();
+    } catch (e) {
+      throw 'Kakao sign in failed: ${e.toString()}';
+    }
+  }
+
+  // Kakao demo login for testing
+  Future<UserCredential?> signInWithKakaoDemo() async {
+    try {
+      return await _koreanAuth.signInWithKakaoDemo();
+    } catch (e) {
+      throw 'Kakao demo sign in failed: ${e.toString()}';
+    }
+  }
+
+  // Check if Kakao is signed in
+  Future<bool> isKakaoSignedIn() async {
+    return await _koreanAuth.isKakaoSignedIn();
+  }
+
+  // Check backend server health
+  Future<bool> checkBackendHealth() async {
+    return await _koreanAuth.checkBackendHealth();
+  }
+
   // Send password reset email
   Future<void> sendPasswordResetEmail({required String email}) async {
     try {
@@ -253,6 +285,9 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
+      // Sign out from Korean services (Kakao)
+      await _koreanAuth.signOutKakaoServices();
+      
       // Check if user signed in with Google before attempting Google sign out
       final user = _auth.currentUser;
       

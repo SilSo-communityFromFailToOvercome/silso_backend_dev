@@ -43,6 +43,15 @@ dependencies:
   
   # Google Sign-In
   google_sign_in: ^6.3.0
+  
+  # Kakao Login SDK
+  kakao_flutter_sdk: ^1.9.5
+  
+  # HTTP requests for backend communication
+  http: ^1.2.0
+  
+  # Secure storage for tokens
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:

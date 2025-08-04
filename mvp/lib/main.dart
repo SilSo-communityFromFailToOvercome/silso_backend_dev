@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
+import 'services/korean_auth_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -14,9 +15,18 @@ import 'screens/community/policy_agreement_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Initialize Kakao SDK with correct keys for each platform
+  await KoreanAuthService.initialize(
+    kakaoAppKey: '3d1ed1dc6cd2c4797f2dfd65ee48c8e8', // JavaScript key for web
+    nativeAppKey: '3c7a8b482a7de8109be0c367da2eb33a', // Native app key for mobile
+  );
+  
   runApp(const MyApp());
 }
 
@@ -66,8 +76,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _initializeApp() async {
     try {
-      // Check for redirect result on web
+      // Check for redirect result on web (Google)
       await authService.checkRedirectResult();
+      
+      // Check for Kakao OAuth callback only (don't start new login)
+      final koreanAuth = KoreanAuthService();
+      await koreanAuth.handleOAuthCallbackOnly();
     } catch (e) {
       print('Redirect result check error: $e');
     } finally {
