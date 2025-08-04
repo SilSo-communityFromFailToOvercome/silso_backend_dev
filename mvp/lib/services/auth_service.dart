@@ -121,8 +121,43 @@ class AuthService {
     return await _auth.signInWithCredential(credential);
   }
 
-  // Web Google Sign-In flow using Firebase Auth popup
+  // Web Google Sign-In flow with popup and redirect fallback
   Future<UserCredential?> _signInWithGoogleWeb() async {
+    try {
+      // Try popup first (works on desktop)
+      return await _signInWithGooglePopup();
+    } catch (e) {
+      print('Popup sign-in failed: ${e.toString()}');
+      // Fallback to redirect (better for mobile browsers)
+      return await _signInWithGoogleRedirect();
+    }
+  }
+
+  // Mobile-friendly popup sign-in
+  Future<UserCredential?> _signInWithGooglePopup() async {
+    try {
+      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      
+      // Add scopes (use full URLs for People API compatibility)
+      googleProvider.addScope('email');
+      googleProvider.addScope('openid');
+      googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+      
+      // Set custom parameters
+      googleProvider.setCustomParameters({
+        'prompt': 'select_account',
+      });
+
+      // Sign in with popup
+      final UserCredential result = await _auth.signInWithPopup(googleProvider);
+      return result;
+    } catch (e) {
+      throw 'Popup sign-in failed: ${e.toString()}';
+    }
+  }
+
+  // Fallback: Redirect method for mobile browsers
+  Future<UserCredential?> _signInWithGoogleRedirect() async {
     try {
       final GoogleAuthProvider googleProvider = GoogleAuthProvider();
       
@@ -134,14 +169,15 @@ class AuthService {
       // Set custom parameters
       googleProvider.setCustomParameters({
         'prompt': 'select_account',
-        'login_hint': 'user@example.com',
       });
 
-      // Sign in with popup
-      final UserCredential result = await _auth.signInWithPopup(googleProvider);
-      return result;
+      // Use redirect for mobile browsers
+      await _auth.signInWithRedirect(googleProvider);
+      
+      // Note: The result will be handled by getRedirectResult() after page reload
+      return null;
     } catch (e) {
-      throw 'Google sign-in failed: ${e.toString()}';
+      throw 'Redirect sign-in failed: ${e.toString()}';
     }
   }
 
