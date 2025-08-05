@@ -1,154 +1,103 @@
-import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
-/// CORS testing utility for web platform
+/// CORS testing utility - cross-platform compatible
 class CorsTest {
-  /// Test CORS configuration by attempting to fetch an image from Firebase Storage
+  /// Test network connectivity by attempting to fetch an image from Firebase Storage
   static Future<bool> testFirebaseStorageCors(String imageUrl) async {
-    if (!kIsWeb) {
-      // CORS only applies to web, return true for other platforms
-      return true;
-    }
-
     try {
-      // Method 1: Try to load image with fetch API to test CORS
-      final response = await html.window.fetch(
-        imageUrl,
-        {
-          'mode': 'cors',
-          'method': 'GET',
-        },
-      );
-
-      if (response.ok) {
-        print('✅ CORS Test PASSED: Successfully fetched image from Firebase Storage');
+      // Use HTTP package for all platforms
+      final response = await http.get(Uri.parse(imageUrl));
+      
+      if (response.statusCode == 200) {
+        print('✅ Network Test PASSED: Successfully fetched image from Firebase Storage');
         print('   URL: $imageUrl');
-        print('   Status: ${response.status}');
+        print('   Status: ${response.statusCode}');
         return true;
       } else {
-        print('❌ CORS Test FAILED: HTTP Error ${response.status}');
+        print('❌ Network Test FAILED: HTTP Error ${response.statusCode}');
         print('   URL: $imageUrl');
         return false;
       }
     } catch (e) {
-      print('❌ CORS Test FAILED: Exception occurred');
+      print('❌ Network Test FAILED: Exception occurred');
       print('   URL: $imageUrl');
       print('   Error: $e');
       
-      // Check if it's a CORS-specific error
-      if (e.toString().contains('CORS') || 
-          e.toString().contains('Cross-Origin') ||
-          e.toString().contains('blocked')) {
-        print('   This appears to be a CORS-related error.');
-        print('   Make sure CORS is configured for your Firebase Storage bucket.');
+      if (kIsWeb) {
+        // Check if it's a CORS-specific error on web
+        if (e.toString().contains('CORS') || 
+            e.toString().contains('Cross-Origin') ||
+            e.toString().contains('blocked')) {
+          print('   This appears to be a CORS-related error.');
+          print('   Make sure CORS is configured for your Firebase Storage bucket.');
+        }
       }
       
       return false;
     }
   }
 
-  /// Test CORS with a preflight request
+  /// Test network connectivity with HEAD request (lighter than GET)
   static Future<bool> testCorsPreflightRequest(String bucketUrl) async {
-    if (!kIsWeb) return true;
-
     try {
-      // Send an OPTIONS request to test preflight
-      final response = await html.window.fetch(
-        bucketUrl,
-        {
-          'method': 'OPTIONS',
-          'mode': 'cors',
-          'headers': {
-            'Access-Control-Request-Method': 'GET',
-            'Access-Control-Request-Headers': 'Content-Type',
-          },
-        },
-      );
-
-      if (response.ok) {
-        print('✅ CORS Preflight PASSED');
+      // Use HEAD request to test accessibility
+      final response = await http.head(Uri.parse(bucketUrl));
+      
+      if (response.statusCode == 200) {
+        print('✅ HEAD Request Test PASSED');
         return true;
       } else {
-        print('❌ CORS Preflight FAILED: ${response.status}');
+        print('❌ HEAD Request Test FAILED: ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      print('❌ CORS Preflight FAILED: $e');
+      print('❌ HEAD Request Test FAILED: $e');
       return false;
     }
   }
 
-  /// Get current origin for debugging
+  /// Get current platform for debugging
   static String getCurrentOrigin() {
-    if (!kIsWeb) return 'Not Web Platform';
-    return html.window.location.origin;
+    if (kIsWeb) {
+      return 'Web Platform';
+    }
+    return 'Mobile Platform';
   }
 
-  /// Print CORS debugging information
+  /// Print platform debugging information
   static void printCorsDebugInfo() {
-    if (!kIsWeb) {
-      print('🔍 Platform: Not Web (CORS not applicable)');
-      return;
+    print('🔍 Platform Debug Information:');
+    print('   Platform: ${getCurrentOrigin()}');
+    print('   Is Web: $kIsWeb');
+    if (kIsWeb) {
+      print('   Note: CORS applies to web platform only');
+    } else {
+      print('   Note: CORS does not apply to mobile platforms');
     }
-
-    print('🔍 CORS Debug Information:');
-    print('   Current Origin: ${getCurrentOrigin()}');
-    print('   User Agent: ${html.window.navigator.userAgent}');
-    print('   Protocol: ${html.window.location.protocol}');
-    print('   Host: ${html.window.location.host}');
-    print('   Port: ${html.window.location.port}');
   }
 
   /// Test if an image URL is accessible
   static Future<bool> testImageAccess(String imageUrl) async {
-    if (!kIsWeb) return true;
-
     try {
-      // Create an image element to test loading
-      final img = html.ImageElement();
-      
-      // Set up a completer to handle the async image load
-      bool loadSuccess = false;
-      bool loadComplete = false;
-
-      img.onLoad.listen((_) {
-        loadSuccess = true;
-        loadComplete = true;
-        print('✅ Image Load Test PASSED: Image loaded successfully');
-      });
-
-      img.onError.listen((_) {
-        loadSuccess = false;
-        loadComplete = true;
-        print('❌ Image Load Test FAILED: Image failed to load');
-        print('   This could be due to CORS restrictions or invalid URL');
-      });
-
-      // Set the source to trigger loading
-      img.src = imageUrl;
-
-      // Wait for load to complete (with timeout)
-      int attempts = 0;
-      while (!loadComplete && attempts < 50) { // 5 second timeout
-        await Future.delayed(const Duration(milliseconds: 100));
-        attempts++;
-      }
-
-      if (!loadComplete) {
-        print('❌ Image Load Test TIMEOUT: Image took too long to load');
+      // Use HEAD request to test accessibility without downloading content
+      final response = await http.head(Uri.parse(imageUrl));
+      if (response.statusCode == 200) {
+        print('✅ Image Access Test PASSED: Image URL is accessible');
+        return true;
+      } else {
+        print('❌ Image Access Test FAILED: HTTP ${response.statusCode}');
         return false;
       }
-
-      return loadSuccess;
     } catch (e) {
-      print('❌ Image Load Test ERROR: $e');
+      print('❌ Image Access Test ERROR: $e');
       return false;
     }
   }
 
-  /// Comprehensive CORS test
+  /// Comprehensive network connectivity test
   static Future<Map<String, dynamic>> runComprehensiveCorsTest(String? testImageUrl) async {
-    print('🧪 Running Comprehensive CORS Test...');
+    print('🧪 Running Comprehensive Network Test...');
     printCorsDebugInfo();
 
     final results = <String, dynamic>{
@@ -156,12 +105,6 @@ class CorsTest {
       'origin': getCurrentOrigin(),
       'corsRequired': kIsWeb,
     };
-
-    if (!kIsWeb) {
-      results['status'] = 'skipped';
-      results['message'] = 'CORS testing skipped on non-web platform';
-      return results;
-    }
 
     if (testImageUrl == null || testImageUrl.isEmpty) {
       results['status'] = 'error';
@@ -174,25 +117,29 @@ class CorsTest {
     final imageTest = await testImageAccess(testImageUrl);
     results['imageAccessTest'] = imageTest;
 
-    // Test 2: Fetch API test
-    print('\n🌐 Testing fetch API access...');
+    // Test 2: Network connectivity test
+    print('\n🌐 Testing network connectivity...');
     final fetchTest = await testFirebaseStorageCors(testImageUrl);
     results['fetchTest'] = fetchTest;
 
     // Determine overall status
     if (imageTest && fetchTest) {
       results['status'] = 'success';
-      results['message'] = 'All CORS tests passed';
-      print('\n✅ CORS Configuration appears to be working correctly!');
+      results['message'] = 'All network tests passed';
+      print('\n✅ Network connectivity is working correctly!');
     } else {
       results['status'] = 'failed';
-      results['message'] = 'One or more CORS tests failed';
-      print('\n❌ CORS Configuration issues detected');
+      results['message'] = 'One or more network tests failed';
+      print('\n❌ Network connectivity issues detected');
       print('\n🔧 Troubleshooting steps:');
-      print('   1. Apply CORS configuration: gsutil cors set cors.json gs://your-bucket');
-      print('   2. Verify your current origin (${getCurrentOrigin()}) is in cors.json');
-      print('   3. Clear browser cache and try again');
+      if (kIsWeb) {
+        print('   1. Apply CORS configuration: gsutil cors set cors.json gs://your-bucket');
+        print('   2. Verify your current origin is in cors.json');
+        print('   3. Clear browser cache and try again');
+      }
       print('   4. Check Firebase Storage security rules');
+      print('   5. Verify internet connectivity');
+      print('   6. Check if the URL is valid and accessible');
     }
 
     return results;
