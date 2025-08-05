@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/korean_auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -25,15 +27,54 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    // 총 애니메이션 시간(7초 + 2초 = 9초) 후에 로그인 화면으로 이동
-    Future.delayed(const Duration(seconds: 9), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      }
-    });
-
-    // 새로운 애니메이션 시퀀스 시작
+    // Start animation sequence
     _startAnimationSequence();
+    
+    // Check authentication and handle OAuth callback
+    _checkAuthenticationState();
+  }
+
+  void _checkAuthenticationState() async {
+    try {
+      // First, try to handle OAuth callback if present
+      final koreanAuth = KoreanAuthService();
+      final callbackResult = await koreanAuth.handleOAuthCallbackOnly();
+      
+      if (callbackResult != null) {
+        // OAuth callback successful, immediately go to login success page
+        print('✅ OAuth callback handled successfully');
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/after-login-splash');
+        }
+        return;
+      }
+      
+      // Check if user is already signed in
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        print('✅ User already signed in: ${currentUser.uid}');
+        // User already logged in, skip animation and go to home immediately
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/after-login-splash');
+        }
+      } else {
+        // No user signed in, show animation then go to login
+        print('🟡 No user signed in, going to login');
+        Future.delayed(const Duration(seconds: 9), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
+    } catch (e) {
+      print('❌ Error checking authentication state: $e');
+      // On error, default to login screen
+      Future.delayed(const Duration(seconds: 9), () {
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+      });
+    }
   }
 
   void _startAnimationSequence() {
