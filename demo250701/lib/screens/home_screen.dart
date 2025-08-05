@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'intro_community_splash.dart';
 import 'community/add_community_screen.dart';
 import 'community/main_communities_screen.dart';
 import 'community/my_communities_screen.dart';
@@ -133,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const IntroCommunitySplash(),
+                        builder: (context) => const _DevCommunityScreen(),
                       ),
                     );
                   },
@@ -148,36 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6C5CE7),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ),
-              
-              // Temporary Development Button - Skip to Community
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const _DevCommunityScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.skip_next, color: Colors.white),
-                  label: const Text(
-                    'Skip to Community (Dev)',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.withValues(alpha: 0.8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
