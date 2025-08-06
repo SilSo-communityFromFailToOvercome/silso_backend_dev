@@ -4,37 +4,37 @@ import '../../models/community_model.dart';
 import 'community_detail_screen.dart';
 import 'search_communities_screen.dart';
 
-class MainCommunitiesScreen extends StatefulWidget {
-  const MainCommunitiesScreen({super.key});
+class RecommendedCommunitiesScreen extends StatefulWidget {
+  const RecommendedCommunitiesScreen({super.key});
 
   @override
-  State<MainCommunitiesScreen> createState() => _MainCommunitiesScreenState();
+  State<RecommendedCommunitiesScreen> createState() => _RecommendedCommunitiesScreenState();
 }
 
-class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
+class _RecommendedCommunitiesScreenState extends State<RecommendedCommunitiesScreen> {
   final CommunityService _communityService = CommunityService();
-  List<Community> _communities = [];
-  Community? _defaultCommunity;
+  List<Community> _recommendedCommunities = [];
+  List<String> _userInterests = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadCommunities();
-    _loadDefaultCommunity();
+    _loadRecommendedCommunities();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  Future<void> _loadCommunities() async {
+  Future<void> _loadRecommendedCommunities() async {
     try {
-      final communities = await _communityService.getAllCommunities();
+      // Load user interests first
+      final interests = await _communityService.getUserInterests();
+      
+      // Load recommended communities based on user interests
+      final recommendations = await _communityService.getRecommendedCommunities();
+      
       if (mounted) {
         setState(() {
-          _communities = communities;
+          _userInterests = interests;
+          _recommendedCommunities = recommendations;
           _isLoading = false;
         });
       }
@@ -43,7 +43,7 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load communities: ${e.toString()}'),
+            content: Text('Failed to load recommendations: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -51,23 +51,24 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
     }
   }
 
-  Future<void> _loadDefaultCommunity() async {
-    try {
-      final defaultCommunity = await _communityService.initializeDefaultCommunity();
-      if (mounted) {
-        setState(() {
-          _defaultCommunity = defaultCommunity;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading default community: $e');
-    }
+  Future<void> _refreshRecommendations() async {
+    setState(() => _isLoading = true);
+    await _loadRecommendedCommunities();
   }
 
-
-  Future<void> _refreshCommunities() async {
-    setState(() => _isLoading = true);
-    await _loadCommunities();
+  int _calculateRelevanceScore(Community community) {
+    if (_userInterests.isEmpty) return 0;
+    
+    int matchingTags = 0;
+    for (String hashtag in community.hashtags) {
+      for (String interest in _userInterests) {
+        if (hashtag.toLowerCase().contains(interest.toLowerCase()) ||
+            interest.toLowerCase().contains(hashtag.toLowerCase())) {
+          matchingTags++;
+        }
+      }
+    }
+    return matchingTags;
   }
 
   @override
@@ -78,7 +79,7 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-          'All Communities',
+          'Recommended for You',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -102,109 +103,102 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _refreshCommunities,
+            onPressed: _refreshRecommendations,
           ),
         ],
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Featured Community Section (Default Community)
-            if (_defaultCommunity != null) ...[
+            // User Interests Header
+            if (_userInterests.isNotEmpty) ...[
               Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                    colors: [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                      color: const Color(0xFF6C5CE7).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => CommunityDetailScreen(community: _defaultCommunity!),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.star,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Your Interests',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Based on your selected categories',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _userInterests.map((interest) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            _getInterestDisplayName(interest),
+                            style: const TextStyle(
+                              fontSize: 12,
                               color: Colors.white,
-                              size: 20,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Featured Community',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Default Community for All Users',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white.withValues(alpha: 0.7),
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _defaultCommunity!.communityName,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_defaultCommunity!.memberCount} members',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -215,13 +209,13 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.explore,
+                    Icons.recommend,
                     color: Colors.white.withValues(alpha: 0.8),
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    'Discover Communities',
+                    'Recommended Communities',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -232,47 +226,7 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
               ),
             ),
 
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const SearchCommunitiesScreen(),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.search,
-                        color: Color(0xFF6C5CE7),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Search communities or hashtags...',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            
-            // Communities List
+            // Recommendations List
             Expanded(
               child: _isLoading
                   ? const Center(
@@ -280,17 +234,18 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6C5CE7)),
                       ),
                     )
-                  : _communities.isEmpty
+                  : _recommendedCommunities.isEmpty
                       ? _buildEmptyState()
                       : RefreshIndicator(
-                          onRefresh: _refreshCommunities,
+                          onRefresh: _refreshRecommendations,
                           color: const Color(0xFF6C5CE7),
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _communities.length,
+                            itemCount: _recommendedCommunities.length,
                             itemBuilder: (context, index) {
-                              final community = _communities[index];
-                              return _buildCommunityCard(community);
+                              final community = _recommendedCommunities[index];
+                              final relevanceScore = _calculateRelevanceScore(community);
+                              return _buildRecommendedCommunityCard(community, relevanceScore, index + 1);
                             },
                           ),
                         ),
@@ -307,13 +262,13 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.group_off,
+            Icons.recommend_outlined,
             size: 64,
             color: Colors.white.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
-            'No communities found',
+            'No recommendations available',
             style: TextStyle(
               fontSize: 18,
               color: Colors.white.withValues(alpha: 0.7),
@@ -322,18 +277,19 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Be the first to create one!',
+            'Complete your profile setup to get personalized recommendations',
             style: TextStyle(
               fontSize: 14,
               color: Colors.white.withValues(alpha: 0.5),
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCommunityCard(Community community) {
+  Widget _buildRecommendedCommunityCard(Community community, int relevanceScore, int rank) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: Card(
@@ -358,6 +314,65 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Rank and Relevance Badge
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _getRankColor(rank),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '#$rank',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (relevanceScore > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6C5CE7).withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 12,
+                              color: Color(0xFF6C5CE7),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$relevanceScore match${relevanceScore > 1 ? 'es' : ''}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF6C5CE7),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const Spacer(),
+                    Text(
+                      _formatDate(community.dateAdded),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
                 // Community Header
                 Row(
                   children: [
@@ -420,24 +435,10 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
                       ),
                     ),
                     
-                    // Date Added
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          _formatDate(community.dateAdded),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: Colors.white.withValues(alpha: 0.3),
-                        ),
-                      ],
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.white.withValues(alpha: 0.3),
                     ),
                   ],
                 ),
@@ -464,28 +465,41 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
                   ),
                 ],
                 
-                // Hashtags
+                // Hashtags with relevance highlighting
                 if (community.hashtags.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: community.hashtags.take(5).map((hashtag) {
+                      final isRelevant = _isHashtagRelevant(hashtag);
                       return Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6C5CE7).withValues(alpha: 0.2),
+                          color: isRelevant 
+                              ? const Color(0xFF6C5CE7).withValues(alpha: 0.4)
+                              : const Color(0xFF6C5CE7).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
+                          border: isRelevant 
+                              ? Border.all(
+                                  color: const Color(0xFF6C5CE7),
+                                  width: 1,
+                                )
+                              : null,
                         ),
                         child: Text(
                           '#$hashtag',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF6C5CE7),
-                            fontWeight: FontWeight.w500,
+                            color: isRelevant 
+                                ? const Color(0xFF6C5CE7) 
+                                : const Color(0xFF6C5CE7).withValues(alpha: 0.8),
+                            fontWeight: isRelevant 
+                                ? FontWeight.w600 
+                                : FontWeight.w500,
                           ),
                         ),
                       );
@@ -498,6 +512,49 @@ class _MainCommunitiesScreenState extends State<MainCommunitiesScreen> {
         ),
       ),
     );
+  }
+
+  Color _getRankColor(int rank) {
+    switch (rank) {
+      case 1:
+        return const Color(0xFFFFD700); // Gold
+      case 2:
+        return const Color(0xFFC0C0C0); // Silver
+      case 3:
+        return const Color(0xFFCD7F32); // Bronze
+      default:
+        return const Color(0xFF6C5CE7); // Default purple
+    }
+  }
+
+  bool _isHashtagRelevant(String hashtag) {
+    for (String interest in _userInterests) {
+      if (hashtag.toLowerCase().contains(interest.toLowerCase()) ||
+          interest.toLowerCase().contains(hashtag.toLowerCase())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String _getInterestDisplayName(String interestId) {
+    // Map interest IDs to display names
+    const Map<String, String> interestMap = {
+      'business': '자영업',
+      'startup': '스타트업',
+      'career_change': '이직',
+      'resignation': '퇴사',
+      'employment': '취직',
+      'study': '학업',
+      'contest': '공모전',
+      'mental_care': '멘탈케어',
+      'relationships': '인간관계',
+      'daily_life': '일상',
+      'humor': '유머',
+      'health': '건강',
+    };
+    
+    return interestMap[interestId] ?? interestId;
   }
 
   String _formatDate(DateTime date) {

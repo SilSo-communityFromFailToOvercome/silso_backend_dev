@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/community_model.dart';
 import '../models/post_model.dart';
 
@@ -7,8 +8,101 @@ class CommunityService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // Default community configuration
+  static const String defaultCommunityName = '종합게시반';
+  static const String defaultCommunityId = 'default_general_board'; // You can change this if needed
+
   // Get current user ID
   String? get currentUserId => _auth.currentUser?.uid;
+
+  // Check if a community is the default community
+  bool isDefaultCommunity(String communityName) {
+    return communityName == defaultCommunityName;
+  }
+
+  // Check if a community ID is the default community ID
+  bool isDefaultCommunityById(String communityId) {
+    return communityId == defaultCommunityId;
+  }
+
+  // Get the default community
+  Future<Community?> getDefaultCommunity() async {
+    try {
+      // First try to find by specific ID
+      try {
+        final doc = await _firestore.collection('communities').doc(defaultCommunityId).get();
+        if (doc.exists) {
+          return Community.fromMap(doc.data()!, doc.id);
+        }
+      } catch (e) {
+        // If specific ID doesn't work, search by name
+      }
+
+      // Fallback: search by community name
+      final snapshot = await _firestore
+          .collection('communities')
+          .where('communityName', isEqualTo: defaultCommunityName)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        return Community.fromMap(snapshot.docs.first.data(), snapshot.docs.first.id);
+      }
+
+      // If default community doesn't exist, create it
+      debugPrint('Default community not found, creating it...');
+      await _createDefaultCommunity();
+      
+      // Try to get it again after creation
+      final newSnapshot = await _firestore
+          .collection('communities')
+          .where('communityName', isEqualTo: defaultCommunityName)
+          .limit(1)
+          .get();
+
+      if (newSnapshot.docs.isNotEmpty) {
+        return Community.fromMap(newSnapshot.docs.first.data(), newSnapshot.docs.first.id);
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('Error getting default community: $e');
+      return null;
+    }
+  }
+
+  // Create the default community if it doesn't exist
+  Future<void> _createDefaultCommunity() async {
+    try {
+      // Use a system user ID for the creator (you can change this)
+      const String systemUserId = 'system_admin';
+      
+      final defaultCommunityData = {
+        'communityId': defaultCommunityId,
+        'communityName': defaultCommunityName,
+        'announcement': '실소 커뮤니티의 기본 게시판입니다. 모든 사용자가 자동으로 가입되어 자유롭게 소통할 수 있습니다.',
+        'communityBanner': null,
+        'creatorId': systemUserId,
+        'dateAdded': FieldValue.serverTimestamp(),
+        'hashtags': ['일반', '자유게시판', '종합', 'general', 'community', '실소'],
+        'memberCount': 0,
+        'members': <String>[],
+        'posts': <String>[],
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      // Create with specific document ID
+      await _firestore
+          .collection('communities')
+          .doc(defaultCommunityId)
+          .set(defaultCommunityData);
+
+      debugPrint('Default community created successfully: $defaultCommunityName');
+    } catch (e) {
+      debugPrint('Error creating default community: $e');
+      throw 'Failed to create default community: ${e.toString()}';
+    }
+  }
 
   // Check if user has completed community setup
   Future<bool> hasCompletedCommunitySetup() async {
@@ -151,11 +245,86 @@ class CommunityService {
         'policyAgreementTimestamp': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      // Auto-subscribe user to default community
+      await _autoSubscribeToDefaultCommunity();
     } catch (e) {
       throw 'Failed to save policy agreement: ${e.toString()}';
     }
   }
 
+  // Auto-subscribe user to default community
+  Future<void> _autoSubscribeToDefaultCommunity() async {
+    if (currentUserId == null) return;
+
+    try {
+      final defaultCommunity = await getDefaultCommunity();
+      if (defaultCommunity == null) {
+        debugPrint('Default community not found, skipping auto-subscription');
+        return;
+      }
+
+      // Check if user is already a member
+      if (defaultCommunity.members.contains(currentUserId)) {
+        debugPrint('User already subscribed to default community');
+        return;
+      }
+
+      // Add user to default community
+      await joinCommunity(defaultCommunity.communityId);
+      debugPrint('User auto-subscribed to default community: ${defaultCommunity.communityName}');
+    } catch (e) {
+      debugPrint('Error auto-subscribing to default community: $e');
+      // Don't throw error as this shouldn't block user setup
+    }
+  }
+
+
+  // Ensure user is subscribed to default community (call this on login/app start)
+  Future<void> ensureDefaultCommunitySubscription() async {
+    if (currentUserId == null) return;
+
+    try {
+      final defaultCommunity = await getDefaultCommunity();
+      if (defaultCommunity == null) {
+        debugPrint('Default community not found after creation attempt');
+        return;
+      }
+
+      // Check if user is already a member
+      if (!defaultCommunity.members.contains(currentUserId)) {
+        await joinCommunity(defaultCommunity.communityId);
+        debugPrint('User subscribed to default community on login');
+      } else {
+        debugPrint('User already subscribed to default community');
+      }
+    } catch (e) {
+      debugPrint('Error ensuring default community subscription: $e');
+      // Don't throw error as this shouldn't block user login
+    }
+  }
+
+  // Initialize default community and ensure current user is subscribed (call this when needed)
+  Future<Community?> initializeDefaultCommunity() async {
+    try {
+      // Get or create the default community
+      final defaultCommunity = await getDefaultCommunity();
+      if (defaultCommunity == null) {
+        debugPrint('Failed to create or get default community');
+        return null;
+      }
+
+      // Ensure current user is subscribed if logged in
+      if (currentUserId != null) {
+        await ensureDefaultCommunitySubscription();
+      }
+
+      return defaultCommunity;
+    } catch (e) {
+      debugPrint('Error initializing default community: $e');
+      return null;
+    }
+  }
 
   // Get user's community profile data
   Future<Map<String, dynamic>?> getCommunityProfile() async {
@@ -387,10 +556,16 @@ class CommunityService {
         }
 
         final communityData = communityDoc.data()!;
+        final communityName = communityData['communityName'] ?? '';
         final members = List<String>.from(communityData['members'] ?? []);
         
         if (!members.contains(currentUserId)) {
           throw 'Not a member of this community';
+        }
+
+        // Check if this is the default community
+        if (isDefaultCommunity(communityName) || isDefaultCommunityById(communityId)) {
+          throw 'Cannot leave the default community ($defaultCommunityName)';
         }
 
         // Check if user is the creator
@@ -696,5 +871,164 @@ class CommunityService {
     } catch (e) {
       // Handle error silently - view count is not critical
     }
+  }
+
+  // Get user interests for recommendations
+  Future<List<String>> getUserInterests() async {
+    if (currentUserId == null) return [];
+
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .get();
+      
+      if (!doc.exists) return [];
+
+      final data = doc.data()!;
+      final interests = List<String>.from(data['communityInterests'] ?? []);
+      return interests;
+    } catch (e) {
+      debugPrint('Error getting user interests: $e');
+      return [];
+    }
+  }
+
+  // Get recommended communities based on user interests
+  Future<List<Community>> getRecommendedCommunities() async {
+    if (currentUserId == null) return [];
+
+    try {
+      // Get user interests
+      final userInterests = await getUserInterests();
+      if (userInterests.isEmpty) {
+        // If no interests, return general communities
+        return await _getGeneralRecommendations();
+      }
+
+      // Get all communities
+      final allCommunities = await getAllCommunities();
+      if (allCommunities.isEmpty) return [];
+
+      // Filter out communities user is already a member of
+      final userCommunities = await getMyCommunities();
+      final userCommunityIds = userCommunities.map((c) => c.communityId).toSet();
+      final availableCommunities = allCommunities
+          .where((community) => !userCommunityIds.contains(community.communityId))
+          .toList();
+
+      if (availableCommunities.isEmpty) return [];
+
+      // Calculate relevance scores and sort
+      final recommendationsWithScores = availableCommunities.map((community) {
+        final score = _calculateCommunityRelevanceScore(community, userInterests);
+        return {'community': community, 'score': score};
+      }).toList();
+
+      // Sort by relevance score (highest first)
+      recommendationsWithScores.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+
+      // Return top communities (limit to 20)
+      return recommendationsWithScores
+          .take(20)
+          .map((item) => item['community'] as Community)
+          .toList();
+    } catch (e) {
+      debugPrint('Error getting recommended communities: $e');
+      return [];
+    }
+  }
+
+  // Get general recommendations when user has no interests set
+  Future<List<Community>> _getGeneralRecommendations() async {
+    try {
+      // Get communities sorted by member count (most popular)
+      final allCommunities = await getAllCommunities();
+      if (allCommunities.isEmpty) return [];
+
+      // Filter out communities user is already a member of
+      final userCommunities = await getMyCommunities();
+      final userCommunityIds = userCommunities.map((c) => c.communityId).toSet();
+      final availableCommunities = allCommunities
+          .where((community) => !userCommunityIds.contains(community.communityId))
+          .toList();
+
+      // Sort by member count (most popular first)
+      availableCommunities.sort((a, b) => b.memberCount.compareTo(a.memberCount));
+
+      // Return top 15 popular communities
+      return availableCommunities.take(15).toList();
+    } catch (e) {
+      debugPrint('Error getting general recommendations: $e');
+      return [];
+    }
+  }
+
+  // Calculate relevance score between community and user interests
+  int _calculateCommunityRelevanceScore(Community community, List<String> userInterests) {
+    int score = 0;
+    
+    // Map Korean interest categories to English hashtags for matching
+    final interestKeywords = _getInterestKeywords(userInterests);
+    
+    // Check hashtags for matches
+    for (String hashtag in community.hashtags) {
+      for (String keyword in interestKeywords) {
+        if (hashtag.toLowerCase().contains(keyword.toLowerCase()) ||
+            keyword.toLowerCase().contains(hashtag.toLowerCase())) {
+          score += 10; // High weight for hashtag matches
+        }
+      }
+    }
+
+    // Check community name for matches
+    for (String keyword in interestKeywords) {
+      if (community.communityName.toLowerCase().contains(keyword.toLowerCase())) {
+        score += 5; // Medium weight for name matches
+      }
+    }
+
+    // Check announcement for matches
+    if (community.announcement != null) {
+      for (String keyword in interestKeywords) {
+        if (community.announcement!.toLowerCase().contains(keyword.toLowerCase())) {
+          score += 2; // Lower weight for announcement matches
+        }
+      }
+    }
+
+    // Bonus for active communities (more members = more activity)
+    if (community.memberCount > 50) score += 5;
+    if (community.memberCount > 100) score += 5;
+    
+    // Bonus for recent activity
+    final daysSinceCreation = DateTime.now().difference(community.dateAdded).inDays;
+    if (daysSinceCreation < 30) score += 3; // Recent communities get bonus
+
+    return score;
+  }
+
+  // Get English keywords for Korean interest categories for matching
+  List<String> _getInterestKeywords(List<String> userInterests) {
+    const Map<String, List<String>> interestToKeywords = {
+      'business': ['business', 'entrepreneur', 'startup', 'self-employed', '자영업', '사업', '비즈니스'],
+      'startup': ['startup', 'tech', 'innovation', 'entrepreneur', '스타트업', '창업', '기술'],
+      'career_change': ['career', 'job', 'work', 'employment', 'transition', '이직', '직장', '커리어'],
+      'resignation': ['quit', 'resignation', 'career', 'job', '퇴사', '이직', '직장'],
+      'employment': ['job', 'employment', 'career', 'hiring', 'work', '취업', '취직', '직장'],
+      'study': ['study', 'education', 'learning', 'academic', 'school', '학업', '공부', '교육'],
+      'contest': ['contest', 'competition', 'award', 'challenge', '공모전', '대회', '경진'],
+      'mental_care': ['mental', 'health', 'wellness', 'psychology', 'therapy', '멘탈', '정신건강', '힐링'],
+      'relationships': ['relationship', 'friendship', 'social', 'people', '인간관계', '친구', '연애'],
+      'daily_life': ['daily', 'life', 'lifestyle', 'routine', '일상', '라이프', '생활'],
+      'humor': ['humor', 'funny', 'comedy', 'joke', 'entertainment', '유머', '재미', '웃긴'],
+      'health': ['health', 'fitness', 'wellness', 'medical', 'exercise', '건강', '운동', '의료'],
+    };
+
+    List<String> keywords = [];
+    for (String interest in userInterests) {
+      keywords.addAll(interestToKeywords[interest] ?? [interest]);
+    }
+    return keywords;
   }
 }

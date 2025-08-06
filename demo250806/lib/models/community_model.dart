@@ -65,6 +65,11 @@ class Community {
     );
   }
 
+  // Check if this is the default community
+  bool get isDefaultCommunity {
+    return communityName == '종합게시반' || communityId == 'default_general_board';
+  }
+
   // Create a copy of Community with updated fields
   Community copyWith({
     String? communityId,

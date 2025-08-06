@@ -238,7 +238,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: _isLoading ? null : _toggleSubscription,
+                        onPressed: _community.isDefaultCommunity 
+                            ? null 
+                            : (_isLoading ? null : _toggleSubscription),
                         icon: _isLoading
                             ? const SizedBox(
                                 width: 16,
@@ -249,20 +251,26 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                                 ),
                               )
                             : Icon(
-                                _isSubscribed ? Icons.check : Icons.add,
+                                _community.isDefaultCommunity 
+                                    ? Icons.star
+                                    : (_isSubscribed ? Icons.check : Icons.add),
                                 color: Colors.white,
                               ),
                         label: Text(
-                          _isSubscribed ? 'Subscribed' : 'Subscribe',
+                          _community.isDefaultCommunity 
+                              ? 'Default Community'
+                              : (_isSubscribed ? 'Subscribed' : 'Subscribe'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isSubscribed 
-                              ? Colors.green.withValues(alpha: 0.8)
-                              : Colors.white.withValues(alpha: 0.2),
+                          backgroundColor: _community.isDefaultCommunity
+                              ? const Color(0xFFFFD700).withValues(alpha: 0.8) // Gold color for default
+                              : (_isSubscribed 
+                                  ? Colors.green.withValues(alpha: 0.8)
+                                  : Colors.white.withValues(alpha: 0.2)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                             side: BorderSide(

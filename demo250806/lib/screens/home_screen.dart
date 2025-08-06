@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/community_service.dart';
 import 'community/add_community_screen.dart';
 import 'community/main_communities_screen.dart';
 import 'community/my_communities_screen.dart';
-//
-import 'intro_community_splash.dart';
+import 'community/community_detail_screen.dart';
+import 'community/recommended_communities_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -14,6 +15,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
+  final _communityService = CommunityService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Ensure user is subscribed to default community
+    _communityService.ensureDefaultCommunitySubscription();
+  }
 
   Future<void> _signOut() async {
     try {
@@ -39,6 +48,49 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       return 'Good Evening';
     }
+  }
+
+  Widget _buildCommunityActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isSpecial = false,
+  }) {
+    return Material(
+      color: isSpecial 
+          ? const Color(0xFFFFD700).withValues(alpha: 0.3)
+          : Colors.white.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isSpecial ? const Color(0xFFFFD700) : Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSpecial ? const Color(0xFFFFD700) : Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -125,33 +177,210 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 32),
               
-              // Community Button
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const IntroCommunitySplash(),//_DevCommunityScreen(), //
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.people, color: Colors.white),
-                  label: const Text(
-                    'Join Community',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+              // Community Section
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C5CE7),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6C5CE7).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Community Header
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.people,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Community Hub',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Connect, Share, Discover',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Quick Access Buttons Layout
+                    Column(
+                      children: [
+                        // First Row - 2 buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildCommunityActionButton(
+                                icon: Icons.explore,
+                                label: 'Browse All',
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const MainCommunitiesScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildCommunityActionButton(
+                                icon: Icons.recommend,
+                                label: 'Recommended',
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const RecommendedCommunitiesScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Second Row - 2 buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildCommunityActionButton(
+                                icon: Icons.group,
+                                label: 'My Communities',
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const MyCommunitiesScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildCommunityActionButton(
+                                icon: Icons.add_circle,
+                                label: 'Create New',
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const AddCommunityScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Third Row - Default Community (Full Width)
+                        _buildCommunityActionButton(
+                          icon: Icons.star,
+                          label: '종합게시반 - Default Community for All Users',
+                          onTap: () async {
+                            try {
+                              // Show loading indicator
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Text('Loading default community...'),
+                                      ],
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+
+                              final defaultCommunity = await _communityService.initializeDefaultCommunity();
+                              
+                              if (defaultCommunity != null && mounted) {
+                                // Clear any existing snackbars
+                                ScaffoldMessenger.of(context).clearSnackBars();
+                                
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => CommunityDetailScreen(community: defaultCommunity),
+                                  ),
+                                );
+                              } else if (mounted) {
+                                ScaffoldMessenger.of(context).clearSnackBars();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Failed to initialize default community'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).clearSnackBars();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: ${e.toString()}'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          isSpecial: true,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               
