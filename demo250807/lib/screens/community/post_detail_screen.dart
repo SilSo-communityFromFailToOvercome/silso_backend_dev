@@ -27,6 +27,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _isUserMember = false;
   CommentType _selectedCommentType = CommentType.advice;
   bool _isAnonymousComment = false;
+  String _selectedCommentTab = 'advice'; // 'advice' or 'empathy'
 
   @override
   void initState() {
@@ -98,10 +99,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     setState(() => _isLoadingComments = true);
 
     try {
+      // Automatically determine comment type based on current tab
+      final commentType = _selectedCommentTab == 'advice' ? CommentType.advice : CommentType.empathy;
+      
       await _communityService.addPostComment(
         postId: widget.post.postId,
         content: _commentController.text.trim(),
-        type: _selectedCommentType,
+        type: commentType,
         anonymous: _isAnonymousComment,
       );
 
@@ -135,21 +139,29 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2E),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
           widget.community.communityName,
           style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+            color: Color(0xFF121212),
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            fontFamily: 'Pretendard',
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF121212)),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: Color(0xFF121212)),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -184,15 +196,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Widget _buildPostCard() {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
-      ),
+      color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -201,16 +207,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               children: [
                 // Author Avatar
                 CircleAvatar(
-                  radius: 24,
-                  backgroundColor: const Color(0xFF6C5CE7),
+                  radius: 20,
+                  backgroundColor: const Color(0xFF5F37CF),
                   child: Text(
                     widget.post.anonymous 
-                        ? 'A' 
+                        ? '익명' 
                         : widget.post.userId.substring(0, 1).toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontFamily: 'Pretendard',
                     ),
                   ),
                 ),
@@ -224,37 +231,40 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     children: [
                       Text(
                         widget.post.anonymous 
-                            ? 'Anonymous' 
-                            : 'User ${widget.post.userId.substring(0, 8)}...',
+                            ? '익명' 
+                            : '사용자${widget.post.userId.substring(0, 4)}',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: Color(0xFF121212),
+                          fontFamily: 'Pretendard',
                         ),
                       ),
                       Row(
                         children: [
                           Text(
-                            _formatDate(widget.post.datePosted),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white.withValues(alpha: 0.6),
+                            _formatKoreanDate(widget.post.datePosted),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF8E8E8E),
+                              fontFamily: 'Pretendard',
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Row(
                             children: [
                               Icon(
                                 Icons.visibility,
-                                size: 14,
-                                color: Colors.white.withValues(alpha: 0.5),
+                                size: 12,
+                                color: Color(0xFF8E8E8E),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 2),
                               Text(
-                                '${widget.post.viewCount} views',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white.withValues(alpha: 0.6),
+                                '조회 ${widget.post.viewCount}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF8E8E8E),
+                                  fontFamily: 'Pretendard',
                                 ),
                               ),
                             ],
@@ -269,28 +279,29 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 if (widget.post.anonymous)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFF5F37CF).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.visibility_off,
-                          size: 14,
-                          color: Colors.orange,
+                          size: 12,
+                          color: Color(0xFF5F37CF),
                         ),
-                        SizedBox(width: 6),
+                        SizedBox(width: 4),
                         Text(
-                          'Anonymous',
+                          '익명',
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.orange,
+                            fontSize: 10,
+                            color: Color(0xFF5F37CF),
                             fontWeight: FontWeight.w600,
+                            fontFamily: 'Pretendard',
                           ),
                         ),
                       ],
@@ -305,22 +316,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             Text(
               widget.post.title,
               style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                height: 1.3,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF121212),
+                height: 1.4,
+                fontFamily: 'Pretendard',
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
             // Post Caption
             Text(
               widget.post.caption,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white.withValues(alpha: 0.9),
-                height: 1.5,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF121212),
+                height: 1.6,
+                fontFamily: 'Pretendard',
               ),
             ),
             
@@ -336,8 +349,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   width: double.infinity,
                   height: 200,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -349,10 +362,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Image failed to load',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 14,
+                        '이미지를 불러올 수 없습니다',
+                        style: const TextStyle(
+                          color: Color(0xFF8E8E8E),
+                          fontSize: 12,
+                          fontFamily: 'Pretendard',
                         ),
                       ),
                     ],
@@ -376,145 +390,191 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Advice Comments Section
-        _buildCommentTypeSection(
-          title: '💡 Advice & Support',
-          comments: adviceComments,
-          accentColor: const Color(0xFF74B9FF),
-          icon: Icons.lightbulb,
-          emptyMessage: 'No advice comments yet',
+        // Total Comments Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Text(
+            '댓글 ${_comments.length}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF121212),
+              fontFamily: 'Pretendard',
+            ),
+          ),
         ),
         
-        const SizedBox(height: 32),
-        
-        // Empathy Comments Section
-        _buildCommentTypeSection(
-          title: '❤️ Empathy & Understanding',
-          comments: empathyComments,
-          accentColor: const Color(0xFFE17055),
-          icon: Icons.favorite,
-          emptyMessage: 'No empathy comments yet',
+        // Comment Tabs Header
+        Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+          ),
+          child: Row(
+            children: [
+              // Advice Tab
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedCommentTab = 'advice'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _selectedCommentTab == 'advice' 
+                              ? const Color(0xFF121212) 
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      '조언 ${adviceComments.length}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _selectedCommentTab == 'advice'
+                            ? const Color(0xFF121212)
+                            : const Color(0xFF8E8E8E),
+                        fontFamily: 'Pretendard',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Empathy Tab
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedCommentTab = 'empathy'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _selectedCommentTab == 'empathy' 
+                              ? const Color(0xFF121212) 
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      '공감 ${empathyComments.length}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _selectedCommentTab == 'empathy'
+                            ? const Color(0xFF121212)
+                            : const Color(0xFF8E8E8E),
+                        fontFamily: 'Pretendard',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+        
+        // Selected Comments
+        _buildSelectedCommentsSection(),
       ],
     );
   }
 
-  Widget _buildCommentTypeSection({
-    required String title,
-    required List<PostComment> comments,
-    required Color accentColor,
-    required IconData icon,
-    required String emptyMessage,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+  Widget _buildSelectedCommentsSection() {
+    final adviceComments = _comments.where((c) => c.type == CommentType.advice).toList();
+    final empathyComments = _comments.where((c) => c.type == CommentType.empathy).toList();
+    final currentComments = _selectedCommentTab == 'advice' ? adviceComments : empathyComments;
+
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF121212)),
+          ),
+        ),
+      );
+    }
+    
+    if (currentComments.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        child: Column(
           children: [
             Icon(
-              icon,
-              color: accentColor,
-              size: 20,
+              Icons.chat_bubble_outline,
+              size: 48,
+              color: const Color(0xFF8E8E8E).withValues(alpha: 0.5),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(height: 12),
             Text(
-              '$title (${comments.length})',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: accentColor,
+              _selectedCommentTab == 'advice' 
+                  ? '첫 번째 조언을 남겨보세요!' 
+                  : '첫 번째 공감을 남겨보세요!',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF8E8E8E),
+                fontFamily: 'Pretendard',
               ),
             ),
           ],
         ),
-        
-        const SizedBox(height: 16),
-        
-        if (_isLoading)
-          const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6C5CE7)),
-            ),
-          )
-        else if (comments.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: accentColor.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  icon,
-                  size: 32,
-                  color: accentColor.withValues(alpha: 0.5),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  emptyMessage,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Be the first to share!',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: comments.length,
-            itemBuilder: (context, index) {
-              final comment = comments[index];
-              return _buildCommentCard(comment, accentColor);
-            },
-          ),
-      ],
+      );
+    }
+    
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: currentComments.length,
+      itemBuilder: (context, index) {
+        final comment = currentComments[index];
+        return _buildCommentCard(comment, index);
+      },
     );
   }
 
-  Widget _buildCommentCard(PostComment comment, Color accentColor) {
+
+  Widget _buildCommentCard(PostComment comment, int index) {
     final isAdvice = comment.type == CommentType.advice;
-    final icon = isAdvice ? Icons.lightbulb : Icons.favorite;
-    final typeLabel = isAdvice ? 'Advice' : 'Empathy';
+    final typeLabel = isAdvice ? '조언' : '공감';
+    final typeColor = isAdvice ? const Color(0xFF5F37CF) : const Color(0xFFE17055);
+    final adviceComments = _comments.where((c) => c.type == CommentType.advice).toList();
+    final empathyComments = _comments.where((c) => c.type == CommentType.empathy).toList();
+    final currentComments = _selectedCommentTab == 'advice' ? adviceComments : empathyComments;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(
+        bottom: index == currentComments.length - 1 ? 0 : 16,
+      ),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.2),
-        ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Comment Header
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                radius: 16,
-                backgroundColor: accentColor,
-                child: Icon(
-                  icon,
-                  size: 14,
-                  color: Colors.white,
+                radius: 14,
+                backgroundColor: const Color(0xFF121212),
+                child: Text(
+                  comment.anonymous 
+                      ? '익' 
+                      : comment.userId.substring(0, 1).toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'Pretendard',
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -526,58 +586,41 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       children: [
                         Text(
                           comment.anonymous 
-                              ? 'Anonymous' 
-                              : 'User ${comment.userId.substring(0, 8)}...',
+                              ? '익명' 
+                              : '사용자${comment.userId.substring(0, 4)}',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: Color(0xFF121212),
+                            fontFamily: 'Pretendard',
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: accentColor.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            typeLabel,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: accentColor,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        Text(
+                          _formatKoreanDate(comment.createdAt),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF8E8E8E),
+                            fontFamily: 'Pretendard',
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    // Comment Content
                     Text(
-                      _formatDate(comment.createdAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.5),
+                      comment.content,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF121212),
+                        height: 1.5,
+                        fontFamily: 'Pretendard',
                       ),
                     ),
                   ],
                 ),
               ),
             ],
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Comment Content
-          Text(
-            comment.content,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withValues(alpha: 0.9),
-              height: 1.4,
-            ),
           ),
         ],
       ),
@@ -587,109 +630,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Widget _buildCommentInput() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        border: Border(
-          top: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
-          ),
-        ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Comment Type Selection
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedCommentType = CommentType.advice),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: _selectedCommentType == CommentType.advice
-                          ? const Color(0xFF74B9FF).withValues(alpha: 0.2)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _selectedCommentType == CommentType.advice
-                            ? const Color(0xFF74B9FF)
-                            : Colors.white.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.lightbulb,
-                          size: 16,
-                          color: _selectedCommentType == CommentType.advice
-                              ? const Color(0xFF74B9FF)
-                              : Colors.white.withValues(alpha: 0.6),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Advice',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _selectedCommentType == CommentType.advice
-                                ? const Color(0xFF74B9FF)
-                                : Colors.white.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedCommentType = CommentType.empathy),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: _selectedCommentType == CommentType.empathy
-                          ? const Color(0xFFE17055).withValues(alpha: 0.2)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _selectedCommentType == CommentType.empathy
-                            ? const Color(0xFFE17055)
-                            : Colors.white.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.favorite,
-                          size: 16,
-                          color: _selectedCommentType == CommentType.empathy
-                              ? const Color(0xFFE17055)
-                              : Colors.white.withValues(alpha: 0.6),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Empathy',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _selectedCommentType == CommentType.empathy
-                                ? const Color(0xFFE17055)
-                                : Colors.white.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
           
           // Comment Input Field
           Row(
@@ -701,35 +647,38 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   child: TextField(
                     controller: _commentController,
                     maxLines: null,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Color(0xFF121212),
+                      fontFamily: 'Pretendard',
+                    ),
                     decoration: InputDecoration(
-                      hintText: _selectedCommentType == CommentType.advice
-                          ? 'Share your advice or support...'
-                          : 'Share your empathy and understanding...',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                      hintText: _selectedCommentTab == 'advice'
+                          ? '조언이나 지지의 말을 남겨주세요...'
+                          : '공감과 이해의 말을 남겨주세요...',
+                      hintStyle: const TextStyle(
+                        color: Color(0xFFBBBBBB),
+                        fontFamily: 'Pretendard',
                       ),
                       filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.05),
+                      fillColor: const Color(0xFFF0F0F0),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE0E0E0),
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE0E0E0),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: _selectedCommentType == CommentType.advice
-                              ? const Color(0xFF74B9FF)
-                              : const Color(0xFFE17055),
-                          width: 2,
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF121212),
+                          width: 1.5,
                         ),
                       ),
                     ),
@@ -737,62 +686,26 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                children: [
-                  // Anonymous toggle
-                  GestureDetector(
-                    onTap: () => setState(() => _isAnonymousComment = !_isAnonymousComment),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _isAnonymousComment
-                            ? Colors.orange.withValues(alpha: 0.2)
-                            : Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: _isAnonymousComment
-                              ? Colors.orange
-                              : Colors.white.withValues(alpha: 0.1),
+              // Send button
+              GestureDetector(
+                onTap: _isLoadingComments ? null : _addComment,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  child: _isLoadingComments
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8E8E8E)),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.send,
+                          color: Color(0xFF8E8E8E),
+                          size: 20,
                         ),
-                      ),
-                      child: Icon(
-                        Icons.visibility_off,
-                        size: 16,
-                        color: _isAnonymousComment
-                            ? Colors.orange
-                            : Colors.white.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Send button
-                  GestureDetector(
-                    onTap: _isLoadingComments ? null : _addComment,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _selectedCommentType == CommentType.advice
-                            ? const Color(0xFF74B9FF)
-                            : const Color(0xFFE17055),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: _isLoadingComments
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.send,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -814,5 +727,68 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     } else {
       return 'Just now';
     }
+  }
+
+  String _formatKoreanDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays}일 전';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}시간 전';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}분 전';
+    } else {
+      return '방금 전';
+    }
+  }
+
+  Widget _buildAllCommentsSection() {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF121212)),
+          ),
+        ),
+      );
+    }
+    
+    if (_comments.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Icon(
+              Icons.chat_bubble_outline,
+              size: 48,
+              color: const Color(0xFF8E8E8E).withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '첫 번째 댓글을 남겨보세요!',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF8E8E8E),
+                fontFamily: 'Pretendard',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _comments.length,
+      itemBuilder: (context, index) {
+        final comment = _comments[index];
+        return _buildCommentCard(comment, index);
+      },
+    );
   }
 }

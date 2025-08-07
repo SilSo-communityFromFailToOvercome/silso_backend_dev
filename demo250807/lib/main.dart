@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
         '/after-login-splash': (context) => const AfterLoginSplashScreen(),
         '/home': (context) => const HomeScreen(),
         '/intro-community-splash': (context) => const IntroCommunitySplash(),
-        '/community': (context) => const CommunityScreen(),
+        '/community': (context) => const CommunityMainScreen(),
       },
     );
   }
