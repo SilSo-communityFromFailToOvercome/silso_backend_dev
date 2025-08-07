@@ -10,6 +10,7 @@ import '../../models/community_model.dart';
 import '../../widgets/firebase_debug_widget.dart';
 import '../../widgets/cors_test_widget.dart';
 
+
 class AddPostScreen extends StatefulWidget {
   final Community community;
 
@@ -26,11 +27,13 @@ class _AddPostScreenState extends State<AddPostScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _captionController = TextEditingController();
+  final _hashtagController = TextEditingController();
   
   final CommunityService _communityService = CommunityService();
   final ImageService _imageService = ImageService();
   bool _isLoading = false;
   bool _isAnonymous = false;
+  PostType _selectedPostType = PostType.failure;
   String? _imageUrl;
   XFile? _selectedImage;
   Uint8List? _imageBytes; // For web preview
@@ -39,7 +42,30 @@ class _AddPostScreenState extends State<AddPostScreen> {
   void dispose() {
     _titleController.dispose();
     _captionController.dispose();
+    _hashtagController.dispose();
     super.dispose();
+  }
+
+  void _onHashtagChanged(String value) {
+    String newValue = value;
+    
+    // Auto add # at the beginning if not present
+    if (newValue.isNotEmpty && !newValue.startsWith('#')) {
+      newValue = '#$newValue';
+    }
+    
+    // Handle space to create new hashtag
+    if (newValue.endsWith(' ') && newValue.length > 1) {
+      newValue = '$newValue#';
+    }
+    
+    // Update the controller if the value changed
+    if (newValue != value) {
+      _hashtagController.value = TextEditingValue(
+        text: newValue,
+        selection: TextSelection.collapsed(offset: newValue.length),
+      );
+    }
   }
 
   Future<void> _pickImage() async {
@@ -51,7 +77,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Please select a valid image file (jpg, png, gif, webp)'),
+                content: Text('올바른 이미지 파일을 선택해주세요 (jpg, png, gif, webp)'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -63,7 +89,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Image size too large. Maximum size is ${_imageService.formatFileSize(ImageService.maxFileSizeBytes)}'),
+                content: Text('이미지 크기가 너무 큽니다. 최대 크기: ${_imageService.formatFileSize(ImageService.maxFileSizeBytes)}'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -86,7 +112,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to pick image: ${e.toString()}'),
+            content: Text('이미지 선택에 실패했습니다: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -100,6 +126,155 @@ class _AddPostScreenState extends State<AddPostScreen> {
       _imageBytes = null;
       _imageUrl = null;
     });
+  }
+
+  void _showPostTypeDropdown() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header with close button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SizedBox(width: 24), // Balance the close button
+                        const Text(
+                          '게시 옵션',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF121212),
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(
+                            Icons.close,
+                            color: Color(0xFF8E8E8E),
+                            size: 24,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Section title
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '게시글 유형',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF121212),
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Post type buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setModalState(() => _selectedPostType = PostType.freedom);
+                              setState(() => _selectedPostType = PostType.freedom);
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: _selectedPostType == PostType.freedom
+                                    ? const Color(0xFF121212)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(
+                                  color: _selectedPostType == PostType.freedom
+                                      ? const Color(0xFF121212)
+                                      : const Color(0xFFE0E0E0),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Text(
+                                '자유',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: _selectedPostType == PostType.freedom
+                                      ? Colors.white
+                                      : const Color(0xFF8E8E8E),
+                                  fontFamily: 'Pretendard',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setModalState(() => _selectedPostType = PostType.failure);
+                              setState(() => _selectedPostType = PostType.failure);
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: _selectedPostType == PostType.failure
+                                    ? const Color(0xFF121212)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(
+                                  color: _selectedPostType == PostType.failure
+                                      ? const Color(0xFF121212)
+                                      : const Color(0xFFE0E0E0),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Text(
+                                '실패',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: _selectedPostType == PostType.failure
+                                      ? Colors.white
+                                      : const Color(0xFF8E8E8E),
+                                  fontFamily: 'Pretendard',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _createPost() async {
@@ -127,6 +302,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         caption: _captionController.text.trim(),
         anonymous: _isAnonymous,
         imageUrl: uploadedImageUrl,
+        postType: _selectedPostType,
       );
 
       await _communityService.createPost(request);
@@ -134,7 +310,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Post created successfully!'),
+            content: Text('게시물이 성공적으로 작성되었습니다!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -144,7 +320,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to create post: ${e.toString()}'),
+            content: Text('게시물 작성에 실패했습니다: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -159,172 +335,203 @@ class _AddPostScreenState extends State<AddPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2E),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Create Post',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+        centerTitle: true,
+        title: GestureDetector(
+          onTap: _showPostTypeDropdown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '게시물',
+                style: TextStyle(
+                  color: Color(0xFF121212),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  fontFamily: 'Pretendard',
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                '|',
+                style: TextStyle(
+                  color: Color(0xFF8E8E8E),
+                  fontWeight: FontWeight.w400,
+                  fontSize: 18,
+                  fontFamily: 'Pretendard',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _selectedPostType == PostType.failure ? '실패' : '자유',
+                style: const TextStyle(
+                  color: Color(0xFF121212),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  fontFamily: 'Pretendard',
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.keyboard_arrow_down,
+                color: Color(0xFF121212),
+                size: 20,
+              ),
+            ],
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF121212)),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          TextButton(
+            onPressed: _isLoading ? null : _createPost,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF121212)),
+                    ),
+                  )
+                : const Text(
+                    '완료',
+                    style: TextStyle(
+                      color: Color(0xFF121212),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
+          ),
+        ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Community Info Header
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6C5CE7), Color(0xFF74B9FF)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.post_add,
-                            size: 32,
-                            color: Colors.white,
+                      // Title Field
+                      TextFormField(
+                        controller: _titleController,
+                        style: const TextStyle(
+                          color: Color(0xFF121212),
+                          fontFamily: 'Pretendard',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: '제목을 입력해주세요.',
+                          hintStyle: TextStyle(
+                            color: Color(0xFFBBBBBB),
+                            fontFamily: 'Pretendard',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Posting to',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  widget.community.communityName,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return '제목을 입력해주세요';
+                          }
+                          if (value.trim().length < 2) {
+                            return '제목은 최소 2글자 이상이어야 합니다';
+                          }
+                          return null;
+                        },
                       ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Title Field
-                _buildSectionTitle('Post Title'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _titleController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _buildInputDecoration(
-                    'What would you like to share?',
-                    Icons.title,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Title is required';
-                    }
-                    if (value.trim().length < 5) {
-                      return 'Title must be at least 5 characters';
-                    }
-                    return null;
-                  },
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Caption Field
-                _buildSectionTitle('Caption'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _captionController,
-                  style: const TextStyle(color: Colors.white),
-                  maxLines: 4,
-                  decoration: _buildInputDecoration(
-                    'Share more details about your experience...',
-                    Icons.description,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Caption is required';
-                    }
-                    return null;
-                  },
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Image Upload Section
-                _buildSectionTitle('Image (Optional)'),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: _selectedImage == null
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.image,
-                              size: 40,
-                              color: Colors.white.withValues(alpha: 0.5),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Divider
+                      Container(
+                        height: 2,
+                        color: const Color(0xFFE0E0E0),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Caption Field
+                      TextFormField(
+                        controller: _captionController,
+                        style: const TextStyle(
+                          color: Color(0xFF121212),
+                          fontFamily: 'Pretendard',
+                          fontSize: 16,
+                        ),
+                        maxLines: null,
+                        minLines: 1,
+                        decoration: const InputDecoration(
+                          hintText: '커뮤니티 사람들과 자유롭게 이야기를 나누어요.',
+                          hintStyle: TextStyle(
+                            color: Color(0xFFBBBBBB),
+                            fontFamily: 'Pretendard',
+                            fontSize: 16,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return '내용을 입력해주세요';
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      // Hashtag Field
+                      Transform.translate(
+                        offset: const Offset(0, -8),
+                        child: TextFormField(
+                          controller: _hashtagController,
+                          onChanged: _onHashtagChanged,
+                          style: const TextStyle(
+                            color: Color(0xFF8E8E8E),
+                            fontFamily: 'Pretendard',
+                            fontSize: 16,
+                            height: 1.0,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: '#회사 #동료 #일상',
+                            hintStyle: TextStyle(
+                              color: Color(0xFFBBBBBB),
+                              fontFamily: 'Pretendard',
+                              fontSize: 16,
+                              height: 1.0,
                             ),
-                            const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: _pickImage,
-                              child: const Text(
-                                'Add Image',
-                                style: TextStyle(
-                                  color: Color(0xFF6C5CE7),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Stack(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Image Section
+                      if (_selectedImage != null) ...[
+                        Stack(
                           children: [
                             Container(
                               width: double.infinity,
-                              height: double.infinity,
+                              height: 200,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(8),
                                 child: _buildImagePreview(),
                               ),
                             ),
@@ -334,7 +541,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                               child: GestureDetector(
                                 onTap: _removeImage,
                                 child: Container(
-                                  padding: const EdgeInsets.all(4),
+                                  padding: const EdgeInsets.all(6),
                                   decoration: const BoxDecoration(
                                     color: Colors.black54,
                                     shape: BoxShape.circle,
@@ -349,103 +556,76 @@ class _AddPostScreenState extends State<AddPostScreen> {
                             ),
                           ],
                         ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Anonymous Toggle
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.visibility_off,
-                        color: _isAnonymous 
-                            ? const Color(0xFF6C5CE7) 
-                            : Colors.white.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Post Anonymously',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Your identity will be hidden from other members',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: _isAnonymous,
-                        onChanged: (value) {
-                          setState(() => _isAnonymous = value);
-                        },
-                        activeColor: const Color(0xFF6C5CE7),
-                      ),
+                        const SizedBox(height: 16),
+                      ],
                     ],
                   ),
                 ),
-                
-                const SizedBox(height: 40),
-                
-                // Debug Widgets (temporary - remove in production)
-                if (kDebugMode) ...[
-                  const SizedBox(height: 24),
-                  const FirebaseDebugWidget(),
-                  const SizedBox(height: 16),
-                  const CorsTestWidget(),
-                  const SizedBox(height: 24),
-                ],
-                
-                // Create Post Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _createPost,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C5CE7),
-                      disabledBackgroundColor: Colors.grey,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                        : const Text(
-                            'Create Post',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
+              ),
+              
+              // Bottom Bar with Actions
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFE0E0E0)),
                   ),
                 ),
-              ],
-            ),
+                child: Row(
+                  children: [
+                    // Image Picker Button
+                    IconButton(
+                      onPressed: _pickImage,
+                      icon: const Icon(
+                        Icons.camera_alt,
+                        color: Color(0xFF8E8E8E),
+                      ),
+                    ),
+                    
+                    const Spacer(),
+                    
+                    // Anonymous Toggle
+                    GestureDetector(
+                      onTap: () => setState(() => _isAnonymous = !_isAnonymous),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: _isAnonymous ? const Color(0xFF8E8E8E) : Colors.transparent,
+                              border: Border.all(
+                                color: const Color(0xFFBBBBBB),
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: _isAnonymous
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 14,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            '익명',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF8E8E8E),
+                              fontFamily: 'Pretendard',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -464,10 +644,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
           return Container(
             width: double.infinity,
             height: double.infinity,
-            color: Colors.white.withValues(alpha: 0.1),
+            color: const Color(0xFFF5F5F5),
             child: const Icon(
               Icons.broken_image,
-              color: Colors.grey,
+              color: Color(0xFF8E8E8E),
               size: 40,
             ),
           );
@@ -482,10 +662,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
           return Container(
             width: double.infinity,
             height: double.infinity,
-            color: Colors.white.withValues(alpha: 0.1),
+            color: const Color(0xFFF5F5F5),
             child: const Icon(
               Icons.broken_image,
-              color: Colors.grey,
+              color: Color(0xFF8E8E8E),
               size: 40,
             ),
           );
@@ -497,62 +677,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: Colors.white.withValues(alpha: 0.1),
+      color: const Color(0xFFF5F5F5),
       child: const Icon(
         Icons.image,
-        color: Colors.grey,
+        color: Color(0xFF8E8E8E),
         size: 40,
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-      ),
-    );
-  }
-
-  InputDecoration _buildInputDecoration(String hint, IconData icon) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-        color: Colors.white.withValues(alpha: 0.5),
-      ),
-      prefixIcon: Icon(
-        icon,
-        color: const Color(0xFF6C5CE7),
-      ),
-      filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.05),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF6C5CE7),
-          width: 2,
-        ),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Colors.red,
-        ),
       ),
     );
   }

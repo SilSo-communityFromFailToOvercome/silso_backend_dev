@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum PostType { failure, freedom }
+
 class Post {
   final String postId;
   final String userId; // User who posted
@@ -10,6 +12,7 @@ class Post {
   final String caption;
   final bool anonymous; // Whether post is anonymous
   final String? imageUrl; // Optional image
+  final PostType postType; // Post type (failure or freedom)
   final DateTime datePosted;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -24,6 +27,7 @@ class Post {
     required this.caption,
     required this.anonymous,
     this.imageUrl,
+    required this.postType,
     required this.datePosted,
     required this.createdAt,
     required this.updatedAt,
@@ -41,6 +45,7 @@ class Post {
       'caption': caption,
       'anonymous': anonymous,
       'imageUrl': imageUrl,
+      'postType': postType.toString().split('.').last,
       'datePosted': Timestamp.fromDate(datePosted),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -59,6 +64,7 @@ class Post {
       caption: map['caption'] ?? '',
       anonymous: map['anonymous'] ?? false,
       imageUrl: map['imageUrl'],
+      postType: map['postType'] == 'freedom' ? PostType.freedom : PostType.failure,
       datePosted: (map['datePosted'] as Timestamp?)?.toDate() ?? DateTime.now(),
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -76,6 +82,7 @@ class Post {
     String? caption,
     bool? anonymous,
     String? imageUrl,
+    PostType? postType,
     DateTime? datePosted,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -90,6 +97,7 @@ class Post {
       caption: caption ?? this.caption,
       anonymous: anonymous ?? this.anonymous,
       imageUrl: imageUrl ?? this.imageUrl,
+      postType: postType ?? this.postType,
       datePosted: datePosted ?? this.datePosted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -118,6 +126,7 @@ class CreatePostRequest {
   final String caption;
   final bool anonymous;
   final String? imageUrl;
+  final PostType postType;
 
   CreatePostRequest({
     required this.communityId,
@@ -125,6 +134,7 @@ class CreatePostRequest {
     required this.caption,
     required this.anonymous,
     this.imageUrl,
+    required this.postType,
   });
 
   Map<String, dynamic> toMap(String userId) {
@@ -136,6 +146,7 @@ class CreatePostRequest {
       'caption': caption,
       'anonymous': anonymous,
       'imageUrl': imageUrl,
+      'postType': postType.toString().split('.').last,
       'commentCount': 0, // New posts start with 0 comments
       'viewCount': 0, // New posts start with 0 views
       'datePosted': Timestamp.fromDate(now),
