@@ -103,6 +103,11 @@ class SearchAnalyticsService {
     }
   }
 
+  // Get popular searches (alias for getTopPopularSearches)
+  Future<List<PopularSearch>> getPopularSearches({int limit = 10}) async {
+    return getTopPopularSearches(limit: limit);
+  }
+
   // Get top popular searches
   Future<List<PopularSearch>> getTopPopularSearches({int limit = 10}) async {
     try {

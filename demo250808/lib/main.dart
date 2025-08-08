@@ -5,18 +5,17 @@ import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/korean_auth_service.dart';
 import 'screens/splash_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/community_screen.dart';
-//import 'screens/after_login_splash.dart';
-import 'screens/community/community_mvp/intro_after_login_splash2.dart';  // for MVP community flow 
-import 'screens/intro_community_splash.dart'; // Import the new splash screen
-// Removed unused imports for community screens
+// Korean UI imports
+import 'screens/korean_ui/login_screen.dart';
+import 'screens/korean_ui/intro_after_login_splash2.dart';  // Korean UI community flow 
+import 'screens/korean_ui/community/community_main.dart'; 
+import 'screens/korean_ui/community/community_explore_page.dart'; 
+import 'screens/korean_ui/community/community_search_page.dart';
 
-// for test 
-import 'screens/community/community_mvp/community_tab_mycom2.dart'; 
-import 'screens/community/community_mvp/community_explore_page.dart'; 
-import 'screens/community/community_mvp/community_search_page.dart'; 
+// Legacy UI imports
+import 'screens/legacy_ui/home_screen.dart';
+import 'screens/legacy_ui/community_screen.dart';
+import 'screens/legacy_ui/intro_community_splash.dart'; // Import the legacy splash screen 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,13 +51,13 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => SplashScreen(),//CommunityMainTabScreenMycom(), //ExploreSearchPage(), //CommunityExplorePage(),  
-        '/login': (context) => const LoginScreen(),
-        '/after-login-splash': (context) => const AfterLoginSplashScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/intro-community-splash': (context) => const IntroCommunitySplash(),
-        '/community': (context) => const CommunityScreen(),
-        '/mvp_community' : (context) => const CommunityMainTabScreenMycom(), // Updated to new splash screen
+        '/': (context) => SplashScreen(),
+        '/login': (context) => const LoginScreen(), // Korean UI
+        '/after-login-splash': (context) => const AfterLoginSplashScreen(), // Korean UI
+        '/home': (context) => const HomeScreen(), // Legacy UI
+        '/intro-community-splash': (context) => const IntroCommunitySplash(), // Legacy UI
+        '/community': (context) => const CommunityScreen(), // Legacy UI
+        '/mvp_community' : (context) => const CommunityMainTabScreenMycom(), // Korean UI
       },
     );
   }
