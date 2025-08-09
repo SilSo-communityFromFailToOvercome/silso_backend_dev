@@ -6,6 +6,7 @@ import '../../../models/post_model.dart';
 import '../../../models/community_model.dart';
 import 'community_search_page.dart'; // Korean UI 검색 페이지를 가져옵니다.
 import 'community_detail_page.dart'; // Korean UI 커뮤니티 상세 페이지를 가져옵니다.
+import 'community_find_page.dart'; // Korean UI 커뮤니티 찾아보기 페이지를 가져옵니다.
 
 
 // 커뮤니티 화면을 구성하는 메인 위젯입니다. (StatefulWidget으로 변경)
@@ -25,7 +26,25 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
   late Future<List<Post>> _generalPostsFuture; // 종합 게시판 게시물
   late Future<List<Map<String, dynamic>>> _myPostsFuture; // '내 게시판'을 위한 Future 추가
   late Future<List<Community>> _myCommunitiesFuture; // '내 커뮤니티'를 위한 Future
- late Future<List<Community>> _top5CommunitiesFuture;
+  late Future<List<Community>> _top5CommunitiesFuture;
+  late Future<List<Community>> _recommendedCommunitiesFuture; // 추천 커뮤니티를 위한 Future
+  late Future<List<String>> _userInterestsFuture; // 사용자 관심사를 위한 Future
+
+  // 카테고리 ID와 표시 형식 매핑
+  static const Map<String, Map<String, String>> _categoryMapping = {
+    'business': {'emoji': '🏬', 'name': '자영업'},
+    'startup': {'emoji': '💰', 'name': '창업'},
+    'career_change': {'emoji': '💼', 'name': '이직'},
+    'resignation': {'emoji': '🚪', 'name': '퇴사'},
+    'employment': {'emoji': '🎓', 'name': '취업'},
+    'study': {'emoji': '📚', 'name': '학업'},
+    'contest': {'emoji': '🏆', 'name': '공모전'},
+    'mental_care': {'emoji': '🧘‍♀️', 'name': '멘탈케어'},
+    'relationships': {'emoji': '👥', 'name': '인간관계'},
+    'daily_life': {'emoji': '☀️', 'name': '일상'},
+    'humor': {'emoji': '😄', 'name': '유머'},
+    'health': {'emoji': '💪', 'name': '건강'},
+  };
 
   @override
   void initState() {
@@ -37,7 +56,31 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
     _myPostsFuture = _communityService.getLatestPostsFromMyCommunities(); // 새로 만든 함수 호출
     _myCommunitiesFuture = _communityService.getMyCommunities(); // '내 커뮤니티'를 위한 Future
     _top5CommunitiesFuture = _communityService.getTop5Communities();
+    _recommendedCommunitiesFuture = _loadRecommendedCommunities(); // 추천 커뮤니티 로드
+    _userInterestsFuture = _communityService.getUserInterests(); // 사용자 관심사 로드
 
+  }
+
+  // 추천 커뮤니티를 로드하는 함수 (사용자가 가입하지 않은 커뮤니티 중에서)
+  Future<List<Community>> _loadRecommendedCommunities() async {
+    try {
+      final allCommunities = await _communityService.getAllCommunities();
+      final myCommunitiesData = await _communityService.getMyCommunities();
+      
+      // 사용자가 가입한 커뮤니티 ID 목록 생성
+      final joinedIds = myCommunitiesData.map((c) => c.communityId).toSet();
+      
+      // 가입하지 않은 커뮤니티만 필터링하고 최대 5개까지 반환
+      final recommendedCommunities = allCommunities
+          .where((community) => !joinedIds.contains(community.communityId))
+          .take(5)
+          .toList();
+      
+      return recommendedCommunities;
+    } catch (e) {
+      print('추천 커뮤니티 로드 실패: $e');
+      return [];
+    }
   }
 
   // PostDetailScreen으로 이동하는 함수
@@ -389,8 +432,10 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
   Widget _buildFindCommunityButton(double widthRatio, double heightRatio) {
     return GestureDetector(
       onTap: () {
-        // TODO: 커뮤니티 찾기/탐색 페이지로 이동하는 로직 구현
-        print('커뮤니티 찾아보기 버튼 클릭!');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CommunityFindPage()),
+        );
       },
       child: Container(
         width: 139 * widthRatio,
@@ -399,7 +444,7 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
           shape: RoundedRectangleBorder(
             side: const BorderSide(
               width: 1.20,
-              color: Color(0xFF121212),
+              color: Color(0xFF5F37CF),
             ),
             borderRadius: BorderRadius.circular(400),
           ),
@@ -409,7 +454,7 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
             '커뮤니티 찾아보기',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: const Color(0xFF121212),
+              color: const Color(0xFF5F37CF),
               fontSize: 14 * widthRatio,
               fontFamily: 'Pretendard',
               fontWeight: FontWeight.w600,
@@ -661,21 +706,79 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
 
   /// Helper widget for the category filter chips.
   Widget _buildCategoryChips(double widthRatio, double heightRatio) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildChip('🏬', '자영업', widthRatio, heightRatio),
-          SizedBox(width: 8 * widthRatio),
-          _buildChip('💼', '이직', widthRatio, heightRatio),
-          SizedBox(width: 8 * widthRatio),
-          _buildChip('🧘‍♀️', '멘탈케어', widthRatio, heightRatio),
-          SizedBox(width: 8 * widthRatio),
-          _buildChip('🎓', '취업', widthRatio, heightRatio),
-          SizedBox(width: 8 * widthRatio),
-          _buildChip('💰', '창업', widthRatio, heightRatio),
-        ],
-      ),
+    return FutureBuilder<List<String>>(
+      future: _userInterestsFuture,
+      builder: (context, snapshot) {
+        // 로딩 중일 때 로딩 인디케이터 표시
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox(
+            height: 40 * heightRatio,
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+        
+        // 에러가 발생했거나 데이터가 없을 때 기본 카테고리 표시
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildChip('🏬', '자영업', widthRatio, heightRatio),
+                SizedBox(width: 8 * widthRatio),
+                _buildChip('💼', '이직', widthRatio, heightRatio),
+                SizedBox(width: 8 * widthRatio),
+                _buildChip('🧘‍♀️', '멘탈케어', widthRatio, heightRatio),
+                SizedBox(width: 8 * widthRatio),
+                _buildChip('🎓', '취업', widthRatio, heightRatio),
+                SizedBox(width: 8 * widthRatio),
+                _buildChip('💰', '창업', widthRatio, heightRatio),
+              ],
+            ),
+          );
+        }
+
+        final userInterests = snapshot.data!;
+        
+        // 사용자의 관심사에 해당하는 카테고리만 표시
+        final categoryChips = <Widget>[];
+        for (String interestId in userInterests) {
+          final categoryData = _categoryMapping[interestId];
+          if (categoryData != null) {
+            if (categoryChips.isNotEmpty) {
+              categoryChips.add(SizedBox(width: 8 * widthRatio));
+            }
+            categoryChips.add(
+              _buildChip(
+                categoryData['emoji']!, 
+                categoryData['name']!, 
+                widthRatio, 
+                heightRatio
+              )
+            );
+          }
+        }
+
+        // 사용자 관심사가 없거나 매핑되는 카테고리가 없을 때 기본 표시
+        if (categoryChips.isEmpty) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildChip('🏬', '자영업', widthRatio, heightRatio),
+                SizedBox(width: 8 * widthRatio),
+                _buildChip('💼', '이직', widthRatio, heightRatio),
+                SizedBox(width: 8 * widthRatio),
+                _buildChip('🧘‍♀️', '멘탈케어', widthRatio, heightRatio),
+              ],
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: categoryChips),
+        );
+      },
     );
   }
   
@@ -718,49 +821,61 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
   /// Helper widget for the grid of recommended community cards.
   /// Helper widget for the grid of recommended community cards, now as a horizontal carousel.
   Widget _buildRecommendedCommunityGrid(double widthRatio, double heightRatio) {
-    // These are the cards from your design. They can be populated with dynamic data later.
-    final List<Map<String, String>> recommendedCommunitiesData = [
-      {
-        'title': '퇴사하는 사람들의 모임',
-        'members': '344명',
-        'imageUrl': 'https://placehold.co/144x201/A9A9A9/FFFFFF?text=UI',
-      },
-      {
-        'title': '유리멘탈러들 모여라',
-        'members': '344명',
-        'imageUrl': 'https://placehold.co/144x201/A9A9A9/FFFFFF?text=UI',
-      },
-      {
-        'title': '자영업에 대한\n모든것',
-        'members': '344명',
-        'imageUrl': 'https://placehold.co/144x201/A9A9A9/FFFFFF?text=UI',
-      },
-      // Add more communities here to see them in the carousel
-    ];
-
-    // A SizedBox is used to give a specific height to the horizontal ListView.
-    // This is crucial when placing a horizontal list inside a vertical scrolling parent.
-    return SizedBox(
-      height: 201 * heightRatio, // Set the height to the height of a single card
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal, // Make the list scroll horizontally
-        itemCount: recommendedCommunitiesData.length,
-        // To prevent the card's shadow from being cut off
-        clipBehavior: Clip.none, 
-        itemBuilder: (context, index) {
-          final community = recommendedCommunitiesData[index];
-          // We reuse the same card widget from before
-          return _buildRecommendedCard(
-            widthRatio,
-            heightRatio,
-            title: community['title']!,
-            members: community['members']!,
-            imageUrl: community['imageUrl']!,
+    return FutureBuilder<List<Community>>(
+      future: _recommendedCommunitiesFuture,
+      builder: (context, snapshot) {
+        // 로딩 중일 때 로딩 인디케이터 표시
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox(
+            height: 201 * heightRatio,
+            child: const Center(child: CircularProgressIndicator()),
           );
-        },
-        // This widget builds the space between the cards
-        separatorBuilder: (context, index) => SizedBox(width: 12 * widthRatio),
-      ),
+        }
+        
+        // 에러가 발생했을 때 에러 메시지 표시
+        if (snapshot.hasError) {
+          return SizedBox(
+            height: 201 * heightRatio,
+            child: const Center(child: Text('추천 커뮤니티를 불러오는데 실패했습니다.')),
+          );
+        }
+        
+        // 데이터가 없거나 비어있을 때 메시지 표시
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return SizedBox(
+            height: 201 * heightRatio,
+            child: const Center(child: Text('추천할 커뮤니티가 없습니다.')),
+          );
+        }
+
+        final recommendedCommunities = snapshot.data!;
+
+        // A SizedBox is used to give a specific height to the horizontal ListView.
+        // This is crucial when placing a horizontal list inside a vertical scrolling parent.
+        return SizedBox(
+          height: 201 * heightRatio, // Set the height to the height of a single card
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal, // Make the list scroll horizontally
+            itemCount: recommendedCommunities.length,
+            // To prevent the card's shadow from being cut off
+            clipBehavior: Clip.none, 
+            itemBuilder: (context, index) {
+              final community = recommendedCommunities[index];
+              // We reuse the same card widget from before
+              return _buildRecommendedCard(
+                widthRatio,
+                heightRatio,
+                title: community.communityName,
+                members: '${community.memberCount}명',
+                imageUrl: community.communityBanner ?? 'https://placehold.co/144x201/A9A9A9/FFFFFF?text=${Uri.encodeComponent(community.communityName)}',
+                community: community, // 커뮤니티 객체 전달 (탭 이벤트용)
+              );
+            },
+            // This widget builds the space between the cards
+            separatorBuilder: (context, index) => SizedBox(width: 12 * widthRatio),
+          ),
+        );
+      },
     );
   }
 
@@ -771,68 +886,78 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
     required String title,
     required String members,
     required String imageUrl,
+    required Community community, // 커뮤니티 객체 추가
   }) {
-    return Container(
-      width: 144 * widthRatio,
-      height: 201 * heightRatio,
-      clipBehavior: Clip.antiAlias,
-      decoration: ShapeDecoration(
-        image: DecorationImage(
-          image: NetworkImage(imageUrl),
-          fit: BoxFit.cover,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => KoreanCommunityDetailPage(community: community),
+          ),
+        );
+      },
       child: Container(
-        // Add a gradient overlay for better text readability
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.1),
-                    Colors.black.withOpacity(0.6),
-                ]
-            )
+        width: 144 * widthRatio,
+        height: 201 * heightRatio,
+        clipBehavior: Clip.antiAlias,
+        decoration: ShapeDecoration(
+          image: DecorationImage(
+            image: NetworkImage(imageUrl),
+            fit: BoxFit.cover,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: 7 * widthRatio,
-              top: 32 * heightRatio,
-              right: 7 * widthRatio, // Added right constraint to help with text wrapping
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.29 * widthRatio,
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w700,
+        child: Container(
+          // Add a gradient overlay for better text readability
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.2),
+                      Colors.black.withOpacity(0.7), // 더 어둡게 해서 텍스트 가독성 향상
+                  ]
+              )
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 7 * widthRatio,
+                top: 32 * heightRatio,
+                right: 7 * widthRatio, // Added right constraint to help with text wrapping
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.29 * widthRatio,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              right: 8 * widthRatio,
-              bottom: 8 * heightRatio,
-              child: Row(
-                children: [
-                   Icon(Icons.person_outline, color: Colors.white, size: 14 * widthRatio),
-                   SizedBox(width: 4 * widthRatio),
-                  Text(
-                    members,
-                    style: TextStyle(
-                      color: const Color(0xFFFAFAFA),
-                      fontSize: 12 * widthRatio,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w400,
+              Positioned(
+                right: 8 * widthRatio,
+                bottom: 8 * heightRatio,
+                child: Row(
+                  children: [
+                     Icon(Icons.person_outline, color: Colors.white, size: 14 * widthRatio),
+                     SizedBox(width: 4 * widthRatio),
+                    Text(
+                      members,
+                      style: TextStyle(
+                        color: const Color(0xFFFAFAFA),
+                        fontSize: 12 * widthRatio,
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1117,7 +1242,7 @@ Widget _buildTop5CommunityList(double widthRatio, double heightRatio) {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
         Container(
           height: 3,
           color: isActive ? const Color(0xFF5F37CF) : const Color(0xFFEEEEEE),

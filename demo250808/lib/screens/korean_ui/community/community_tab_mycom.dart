@@ -6,7 +6,7 @@ import '../../../models/post_model.dart';
 import '../../../models/community_model.dart';
 import '../../legacy_ui/community/community_detail_screen.dart';
 import 'community_detail_page.dart'; 
-import 'community_explore_page.dart'; // Import the community explore page
+import 'community_find_page.dart'; // Import the community find page
 import 'community_search_page.dart'; // Korean UI 검색 페이지를 가져옵니다.
 
 // 커뮤니티 화면을 구성하는 메인 위젯입니다. (StatefulWidget으로 변경)
@@ -448,7 +448,7 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
         // TODO: 커뮤니티 찾기/탐색 페이지로 이동하는 로직 구현
         Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const CommunityExplorePage()),
+        MaterialPageRoute(builder: (context) => const CommunityFindPage()),
       );
        },
       child: Container(

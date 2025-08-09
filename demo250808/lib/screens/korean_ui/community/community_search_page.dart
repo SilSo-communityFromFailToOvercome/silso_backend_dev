@@ -486,24 +486,41 @@ class _ExploreSearchPageState extends State<ExploreSearchPage> {
           children: _searchHistory.take(10).map((keyword) {
             return GestureDetector(
               onTap: () => _selectFromHistory(keyword),
-              child: Chip(
-                label: Text(
-                  keyword,
-                  style: TextStyle(
-                    color: const Color(0xFF121212),
-                    fontSize: 13 * widthRatio,
-                    fontWeight: FontWeight.w600,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16 * widthRatio,
+                  vertical: 8 * heightRatio,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20 * widthRatio),
+                  border: Border.all(
+                    color: const Color(0xFFE0E0E0),
+                    width: 2,
                   ),
                 ),
-                backgroundColor: const Color(0xFFE9E9E9),
-                onDeleted: () => _removeFromSearchHistory(keyword),
-                deleteIconColor: const Color(0xFF8E8E8E),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20 * widthRatio),
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12 * widthRatio,
-                  vertical: 6 * heightRatio,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      keyword,
+                      style: TextStyle(
+                        color: const Color(0xFF999999),
+                        fontSize: 14 * widthRatio,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Pretendard',
+                      ),
+                    ),
+                    SizedBox(width: 8 * widthRatio),
+                    GestureDetector(
+                      onTap: () => _removeFromSearchHistory(keyword),
+                      child: Icon(
+                        Icons.close,
+                        size: 16 * widthRatio,
+                        color: const Color(0xFF999999),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -568,62 +585,146 @@ class _ExploreSearchPageState extends State<ExploreSearchPage> {
                     textAlign: TextAlign.center,
                   )
                 : Column(
-                    children: _popularSearches.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final search = entry.value;
-                      return GestureDetector(
-                        onTap: () => _selectPopularSearch(search.query),
-                        child: Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 8 * heightRatio),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 20 * widthRatio,
-                                height: 20 * widthRatio,
-                                decoration: BoxDecoration(
-                                  color: index < 3 ? const Color(0xFF121212) : const Color(0xFFCCCCCC),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11 * widthRatio,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 12 * widthRatio),
-                              Expanded(
-                                child: Text(
-                                  search.query,
-                                  style: TextStyle(
-                                    color: const Color(0xFF121212),
-                                    fontSize: 14 * widthRatio,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '${search.searchCount}회',
-                                style: TextStyle(
-                                  color: const Color(0xFF8E8E8E),
-                                  fontSize: 12 * widthRatio,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                    children: _buildPopularSearchItems(widthRatio, heightRatio),
                   ),
           )
         ]
       ],
+    );
+  }
+
+  List<Widget> _buildPopularSearchItems(double widthRatio, double heightRatio) {
+    // Split items into two columns: 1-5 in left, 6-10 in right
+    final int halfLength = (_popularSearches.length / 2).ceil();
+    final leftColumnItems = _popularSearches.take(halfLength).toList();
+    final rightColumnItems = _popularSearches.skip(halfLength).toList();
+    
+    final List<Widget> rows = [];
+    
+    // Create rows with left and right column items
+    for (int i = 0; i < halfLength; i++) {
+      final leftSearch = i < leftColumnItems.length ? leftColumnItems[i] : null;
+      final rightSearch = i < rightColumnItems.length ? rightColumnItems[i] : null;
+      
+      rows.add(
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 6 * heightRatio),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left column item (ranks 1-5)
+              Expanded(
+                child: leftSearch != null
+                    ? _buildPopularSearchItem(
+                        search: leftSearch,
+                        rank: i + 1, // 1, 2, 3, 4, 5
+                        widthRatio: widthRatio,
+                        heightRatio: heightRatio,
+                      )
+                    : Container(),
+              ),
+              
+              SizedBox(width: 20 * widthRatio),
+              
+              // Right column item (ranks 6-10)
+              Expanded(
+                child: rightSearch != null
+                    ? _buildPopularSearchItem(
+                        search: rightSearch,
+                        rank: halfLength + i + 1, // 6, 7, 8, 9, 10
+                        widthRatio: widthRatio,
+                        heightRatio: heightRatio,
+                      )
+                    : Container(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    return rows;
+  }
+
+  Widget _buildPopularSearchItem({
+    required PopularSearch search,
+    required int rank,
+    required double widthRatio,
+    required double heightRatio,
+  }) {
+    return GestureDetector(
+      onTap: () => _selectPopularSearch(search.query),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: 4 * heightRatio,
+          horizontal: 8 * widthRatio,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8 * widthRatio),
+          color: Colors.transparent,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Rank number
+            Text(
+              '$rank',
+              style: TextStyle(
+                color: const Color(0xFF121212),
+                fontSize: 14 * widthRatio,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(width: 8 * widthRatio),
+            
+            // Search term
+            Expanded(
+              child: Text(
+                search.query,
+                style: TextStyle(
+                  color: const Color(0xFF121212),
+                  fontSize: 14 * widthRatio,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            
+            SizedBox(width: 4 * widthRatio),
+            
+            // Ranking arrow
+            _buildRankingArrow(search.rankingTrend, widthRatio),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRankingArrow(RankingTrend trend, double widthRatio) {
+    IconData iconData;
+    Color iconColor;
+    
+    switch (trend) {
+      case RankingTrend.up:
+        iconData = Icons.keyboard_arrow_up;
+        iconColor = const Color(0xFF5F37CF); // Purple color for up
+        break;
+      case RankingTrend.down:
+        iconData = Icons.keyboard_arrow_down;
+        iconColor = const Color(0xFF5F37CF); // Purple color for down
+        break;
+      case RankingTrend.neutral:
+      default:
+        iconData = Icons.keyboard_arrow_up; // Default to up arrow
+        iconColor = const Color(0xFF5F37CF);
+        break;
+    }
+    
+    return Icon(
+      iconData,
+      color: iconColor,
+      size: 20 * widthRatio,
     );
   }
 

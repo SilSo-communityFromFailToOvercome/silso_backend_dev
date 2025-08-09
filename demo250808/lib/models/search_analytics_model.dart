@@ -72,25 +72,44 @@ class SearchAnalytics {
   }
 }
 
+enum RankingTrend {
+  up,      // 순위 상승
+  down,    // 순위 하락
+  neutral, // 순위 변화 없음 (기본값)
+}
+
 class PopularSearch {
   final String query;
   final int searchCount;
   final int uniqueUserCount;
   final DateTime lastSearched;
+  final RankingTrend rankingTrend;
+  final int? previousRank;
+  final int? currentRank;
 
   PopularSearch({
     required this.query,
     required this.searchCount,
     required this.uniqueUserCount,
     required this.lastSearched,
+    this.rankingTrend = RankingTrend.up, // 기본값은 상승
+    this.previousRank,
+    this.currentRank,
   });
 
-  factory PopularSearch.fromAnalytics(SearchAnalytics analytics) {
+  factory PopularSearch.fromAnalytics(SearchAnalytics analytics, {
+    RankingTrend rankingTrend = RankingTrend.up,
+    int? previousRank,
+    int? currentRank,
+  }) {
     return PopularSearch(
       query: analytics.query,
       searchCount: analytics.searchCount,
       uniqueUserCount: analytics.uniqueUsers.length,
       lastSearched: analytics.lastSearched,
+      rankingTrend: rankingTrend,
+      previousRank: previousRank,
+      currentRank: currentRank,
     );
   }
 }
