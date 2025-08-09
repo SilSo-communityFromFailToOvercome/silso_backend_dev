@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/community_service.dart';
 import 'community/category_selection_screen.dart';
-// Importing community screens
-import 'community/add_community_screen.dart';
-import 'community/main_communities_screen.dart';
-import 'community/my_communities_screen.dart';
+// Importing Korean UI community screens
+import 'korean_ui/community/community_tab_mycom.dart';
 //
 
 class CommunityScreen extends StatefulWidget {
@@ -177,7 +175,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const AddCommunityScreen(),
+                            builder: (context) => const CommunityMainTabScreenMycom(),
                           ),
                         );
                       },
@@ -209,7 +207,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const MainCommunitiesScreen(),
+                            builder: (context) => const CommunityMainTabScreenMycom(),
                           ),
                         );
                       },
@@ -241,7 +239,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const MyCommunitiesScreen(), // 
+                            builder: (context) => const CommunityMainTabScreenMycom(), // 
                           ),
                         );
                       },

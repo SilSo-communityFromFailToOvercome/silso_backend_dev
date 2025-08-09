@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 // 1. Import the new destination screen.
 //    Ensure the path is correct for your project structure.
-import 'community_tab_mycom2.dart'; 
+import '../../korean_ui/community/community_tab_mycom2.dart'; 
 
 class IntroCommunitySplash extends StatefulWidget {
   const IntroCommunitySplash({super.key});

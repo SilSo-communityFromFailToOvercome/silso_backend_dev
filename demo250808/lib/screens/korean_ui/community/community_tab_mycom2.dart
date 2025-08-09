@@ -6,6 +6,7 @@ import '../../../models/post_model.dart';
 import '../../../models/community_model.dart';
 import 'community_explore_page.dart'; // Import the community explore page
 import 'community_search_page.dart'; // Import the search page
+import 'community_detail_page.dart'; // Import the community detail page
 
 // 커뮤니티 화면을 구성하는 메인 위젯입니다. (StatefulWidget으로 변경)
 class CommunityMainTabScreenMycom extends StatefulWidget {

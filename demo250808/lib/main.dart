@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
-import 'services/auth_service.dart';
 import 'services/korean_auth_service.dart';
 import 'screens/splash_screen.dart';
 // Korean UI imports
 import 'screens/korean_ui/login_screen.dart';
 import 'screens/korean_ui/intro_after_login_splash2.dart';  // Korean UI community flow 
-import 'screens/korean_ui/community/community_main.dart'; 
-import 'screens/korean_ui/community/community_explore_page.dart'; 
-import 'screens/korean_ui/community/community_search_page.dart';
+import 'screens/korean_ui/community/community_main.dart';
 
  
 

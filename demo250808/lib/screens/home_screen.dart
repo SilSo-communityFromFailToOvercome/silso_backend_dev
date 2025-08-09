@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/community_service.dart';
-import 'community/add_community_screen.dart';
-import 'community/main_communities_screen.dart';
-import 'community/my_communities_screen.dart';
-import 'community/community_detail_screen.dart';
-import 'community/recommended_communities_screen.dart';
 
 //testing
-import 'community/community_mvp/community_tab_mycom.dart'; 
+import 'korean_ui/community/community_tab_mycom.dart';
+import 'korean_ui/community/community_detail_page.dart'; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -260,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => const MainCommunitiesScreen(),
+                                      builder: (context) => const CommunityMainTabScreenMycom(),
                                     ),
                                   );
                                 },
@@ -274,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => const RecommendedCommunitiesScreen(),
+                                      builder: (context) => const CommunityMainTabScreenMycom(),
                                     ),
                                   );
                                 },
@@ -295,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => const MyCommunitiesScreen(),
+                                      builder: (context) => const CommunityMainTabScreenMycom(),
                                     ),
                                   );
                                 },
@@ -357,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => CommunityDetailScreen(community: defaultCommunity),
+                                    builder: (context) => CommunityDetailPage(community: defaultCommunity),
                                   ),
                                 );
                               } else if (mounted) {
@@ -651,7 +647,7 @@ class _DevCommunityScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const AddCommunityScreen(),
+                            builder: (context) => const CommunityMainTabScreenMycom(),
                           ),
                         );
                       },
@@ -683,7 +679,7 @@ class _DevCommunityScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const MainCommunitiesScreen(),
+                            builder: (context) => const CommunityMainTabScreenMycom(),
                           ),
                         );
                       },
@@ -715,7 +711,7 @@ class _DevCommunityScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const MyCommunitiesScreen(),
+                            builder: (context) => const CommunityMainTabScreenMycom(),
                           ),
                         );
                       },

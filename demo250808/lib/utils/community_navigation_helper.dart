@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/community_service.dart'; // CommunityService 경로
 import '../models/community_model.dart';   // Community 모델 경로
-import '../screens/community/community_detail_screen.dart'; // 상세 페이지 경로
+import '../screens/korean_ui/community/community_detail_page.dart'; // 상세 페이지 경로
 
 class NavigationHelper {
   /// 커뮤니티 ID를 받아 상세 정보 로딩 후 해당 페이지로 이동시키는 공용 함수
@@ -29,7 +29,7 @@ class NavigationHelper {
       // 상세 페이지로 이동합니다.
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => CommunityDetailScreen(
+          builder: (context) => CommunityDetailPage(
             community: community,
           ),
         ),
