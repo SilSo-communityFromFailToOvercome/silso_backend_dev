@@ -69,6 +69,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
   @override
   void initState() {
     super.initState();
+    print("screens/community/category_selection_screen.dart is showing");
     
     // Initialize animations
     _buttonAnimationController = AnimationController(

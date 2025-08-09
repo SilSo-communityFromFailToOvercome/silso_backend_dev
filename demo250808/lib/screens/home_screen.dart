@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    print("screens/home_screen.dart is showing");
     // Ensure user is subscribed to default community
     _communityService.ensureDefaultCommunitySubscription();
   }

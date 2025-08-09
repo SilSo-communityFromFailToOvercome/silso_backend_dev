@@ -13,6 +13,7 @@ class _IntroCommunitySplashState extends State< IntroCommunitySplash> {
   @override
   void initState() {
     super.initState();
+    print("screens/intro_community_splash.dart is currently showing");
     // 3초 후에 CommunityScreen으로 이동하는 로직은 그대로 유지합니다.
     Timer(const Duration(seconds: 3), () {
       if (mounted) {

@@ -18,6 +18,12 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSignUp = false;
 
   @override
+  void initState() {
+    super.initState();
+    print("screens/korean_ui/login_screen.dart is currently showing");
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();

@@ -15,6 +15,7 @@ class _IntroCommunitySplashState extends State<IntroCommunitySplash> {
   @override
   void initState() {
     super.initState();
+    print("screens/korean_ui/intro_community_splash2.dart is currently showing");
     // Keep the 3-second timer.
     Timer(const Duration(seconds: 3), () {
       if (mounted) {

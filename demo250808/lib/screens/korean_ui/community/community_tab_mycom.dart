@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/community_service.dart'; // hot posts, general posts, my posts
-import '../../legacy_ui/community/post_detail_screen.dart';
+import '../../community/post_detail_screen.dart';
 import '../../../models/post_model.dart';
 import '../../../models/community_model.dart';
-import '../../legacy_ui/community/community_detail_screen.dart';
 import 'community_detail_page.dart'; 
 import 'community_find_page.dart'; // Import the community find page
 import 'community_search_page.dart'; // Korean UI 검색 페이지를 가져옵니다.

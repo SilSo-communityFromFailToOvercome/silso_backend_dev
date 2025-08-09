@@ -39,6 +39,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
   Uint8List? _imageBytes; // For web preview
 
   @override
+  void initState() {
+    super.initState();
+    print("screens/community/add_post_screen.dart is showing");
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _captionController.dispose();

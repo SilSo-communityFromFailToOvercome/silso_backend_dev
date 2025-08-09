@@ -30,6 +30,7 @@ class _PolicyAgreementScreenState extends State<PolicyAgreementScreen>
   @override
   void initState() {
     super.initState();
+    print("screens/community/policy_agreement_screen.dart is showing");
     
     // Initialize animations
     _buttonAnimationController = AnimationController(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/community_service.dart'; // hot posts, general posts, my posts
-import '../../legacy_ui/community/post_detail_screen.dart';
+import '../../community/post_detail_screen.dart';
 import '../../../models/post_model.dart';
 import '../../../models/community_model.dart';
 import 'community_search_page.dart'; // Korean UI 검색 페이지를 가져옵니다.
@@ -49,6 +49,7 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
   @override
   void initState() {
     super.initState();
+    print("screens/korean_ui/community/community_main.dart is currently showing");
     // 위젯이 처음 생성될 때 HOT 게시물 데이터를 불러옵니다.
     _hotPostsFuture = _communityService.getHotPosts();
     // 종합 게시판 게시물 데이터를 불러옵니다.

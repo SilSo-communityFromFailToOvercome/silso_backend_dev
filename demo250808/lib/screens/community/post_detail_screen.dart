@@ -32,6 +32,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   void initState() {
     super.initState();
+    print("screens/community/post_detail_screen.dart is showing");
     _loadComments();
     _checkMembership();
     _incrementViewCount();

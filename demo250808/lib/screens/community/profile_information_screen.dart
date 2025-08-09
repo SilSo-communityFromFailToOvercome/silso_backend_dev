@@ -43,6 +43,12 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
   Timer? _timer; // 카운트다운 타이머
 
   @override
+  void initState() {
+    super.initState();
+    print("screens/community/profile_information_screen.dart is showing");
+  }
+
+  @override
   void dispose() {
     // 모든 컨트롤러와 타이머를 정리합니다.
     _nameController.dispose();

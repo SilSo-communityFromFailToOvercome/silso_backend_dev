@@ -28,6 +28,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   @override
   void initState() {
     super.initState();
+    print("screens/community/phone_verification_screen.dart is showing");
     _sendVerificationCode();
   }
 

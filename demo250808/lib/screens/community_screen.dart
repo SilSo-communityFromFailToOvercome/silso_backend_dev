@@ -22,6 +22,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   void initState() {
     super.initState();
+    print("screens/community_screen.dart is showing");
     _checkCommunitySetup();
   }
 

@@ -5,7 +5,6 @@ import '../../../services/community_service.dart';
 import '../../../services/search_analytics_service.dart';
 import '../../../models/community_model.dart';
 import '../../../models/search_analytics_model.dart';
-import '../../legacy_ui/community/community_detail_screen.dart';
 import 'community_detail_page.dart';
 
 class ExploreSearchPage extends StatefulWidget {

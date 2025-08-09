@@ -3,7 +3,6 @@ import 'dart:math' as math; // for PageController rotation
 import '../../../models/community_model.dart'; // 커뮤니티 모델을 가져옵니다.
 import '../../../services/community_service.dart'; // 커뮤니티 서비스 (API 호출 등)를 가져옵니다.
 import '../../../utils/community_navigation_helper.dart'; // 네비게이션 헬퍼를 가져옵니다.
-import '../../legacy_ui/community/community_detail_screen.dart'; // 커뮤니티 상세 페이지를 가져옵니다.
 import 'community_search_page.dart'; // Korean UI 검색 페이지를 가져옵니다.
 
 class CommunityExplorePage extends StatefulWidget {
@@ -32,6 +31,7 @@ class _CommunityExplorePageState extends State<CommunityExplorePage> {
   @override
   void initState() {
     super.initState();
+    print("screens/korean_ui/community/community_explore_page.dart is currently showing");
     // Start fetching the data as soon as the page is loaded.
     _topCommunitiesFuture = _communityService.getTop5Communities();
     // REFACTOR: Fetch all communities for the list view.

@@ -26,6 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    print("screens/splash_screen.dart is showing");
 
     // Start animation sequence
     _startAnimationSequence();

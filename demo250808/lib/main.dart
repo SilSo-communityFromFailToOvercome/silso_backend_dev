@@ -12,10 +12,7 @@ import 'screens/korean_ui/community/community_main.dart';
 import 'screens/korean_ui/community/community_explore_page.dart'; 
 import 'screens/korean_ui/community/community_search_page.dart';
 
-// Legacy UI imports
-import 'screens/legacy_ui/home_screen.dart';
-import 'screens/legacy_ui/community_screen.dart';
-import 'screens/legacy_ui/intro_community_splash.dart'; // Import the legacy splash screen 
+ 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,9 +51,6 @@ class MyApp extends StatelessWidget {
         '/': (context) => SplashScreen(),
         '/login': (context) => const LoginScreen(), // Korean UI
         '/after-login-splash': (context) => const AfterLoginSplashScreen(), // Korean UI
-        '/home': (context) => const HomeScreen(), // Legacy UI
-        '/intro-community-splash': (context) => const IntroCommunitySplash(), // Legacy UI
-        '/community': (context) => const CommunityScreen(), // Legacy UI
         '/mvp_community' : (context) => const CommunityMainTabScreenMycom(), // Korean UI
       },
     );

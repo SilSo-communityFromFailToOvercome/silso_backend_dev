@@ -12,6 +12,7 @@ class _AfterLoginSplashScreenState extends State<AfterLoginSplashScreen> {
   @override
   void initState() {
     super.initState();
+    print("screens/after_login_splash.dart is currently showing");
     // 3초 후에 홈 화면으로 이동합니다.
     // pushReplacementNamed를 사용하여 이 화면이 네비게이션 스택에서 제거되도록 합니다.
     Timer(const Duration(seconds: 3), () {
