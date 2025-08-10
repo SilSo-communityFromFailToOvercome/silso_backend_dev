@@ -469,7 +469,7 @@ class _KoreanCommunityDetailPageState extends State<KoreanCommunityDetailPage> {
                   ),
                 )
               : SizedBox(
-                  height: 120 * heightRatio,
+                  height: 150 * heightRatio,
                   child: ListView.separated(
                     padding: EdgeInsets.symmetric(horizontal: 16 * widthRatio),
                     scrollDirection: Axis.horizontal,

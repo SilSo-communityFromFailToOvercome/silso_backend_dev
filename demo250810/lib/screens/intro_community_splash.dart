@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'community_screen.dart'; // CommunityScreen의 경로가 맞는지 확인하세요.
-
+import 'community/community_main.dart';
 class  IntroCommunitySplash extends StatefulWidget {
   const  IntroCommunitySplash({super.key});
 
@@ -18,7 +17,7 @@ class _IntroCommunitySplashState extends State< IntroCommunitySplash> {
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const CommunityScreen()),
+          MaterialPageRoute(builder: (context) => const CommunityMainTabScreenMycom()),
         );
       }
     });

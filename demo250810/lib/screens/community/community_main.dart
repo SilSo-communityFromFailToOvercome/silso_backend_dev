@@ -8,6 +8,7 @@ import '../../models/community_model.dart';
 import 'community_search_page.dart'; // Korean UI 검색 페이지를 가져옵니다.
 import 'community_detail_page.dart'; // Korean UI 커뮤니티 상세 페이지를 가져옵니다.
 import 'community_find_page.dart'; // Korean UI 커뮤니티 찾아보기 페이지를 가져옵니다.
+import 'admin_add_community.dart'; // Admin add community page
 
 
 // 커뮤니티 화면을 구성하는 메인 위젯입니다. (StatefulWidget으로 변경)
@@ -622,12 +623,14 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
   Widget _buildMyCommunityCard(double widthRatio, double heightRatio, Community community) {
     return Container(
       margin: EdgeInsets.only(bottom: 12 * heightRatio),
+      height: 150 * heightRatio, // Define explicit height for the card
       child: Card(
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12 * widthRatio),
           side: const BorderSide(color: Color(0xFFF0F0F0), width: 1),
         ),
+        clipBehavior: Clip.antiAlias, // Ensure image respects card border radius
         child: InkWell(
           onTap: () {
             Navigator.of(context).push(
@@ -636,72 +639,74 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
               ),
             );
           },
-          borderRadius: BorderRadius.circular(12 * widthRatio),
-          child: Padding(
-            padding: EdgeInsets.all(16 * widthRatio),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Community image on the left
-                Container(
-                  width: 60 * widthRatio,
-                  height: 60 * widthRatio,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE9E9E9),
-                    borderRadius: BorderRadius.circular(8 * widthRatio),
-                  ),
-                  child: community.communityBanner != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8 * widthRatio),
-                          child: Image.network(
-                            community.communityBanner!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.group, color: Colors.grey, size: 24);
-                            },
-                          ),
-                        )
-                      : const Icon(Icons.group, color: Colors.grey, size: 24),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch, // Make children fill full height
+            children: [
+              // Community image on the left - stretches full height
+              Container(
+                width: 80 * widthRatio, // Made slightly wider for better proportion
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE9E9E9),
                 ),
-                
-                SizedBox(width: 16 * widthRatio),
-                
-                // Community info on the right
-                Expanded(
+                child: community.communityBanner != null
+                    ? Image.network(
+                        community.communityBanner!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 80 * widthRatio,
+                            color: const Color(0xFFE9E9E9),
+                            child: const Icon(Icons.group, color: Colors.grey, size: 32),
+                          );
+                        },
+                      )
+                    : const Icon(Icons.group, color: Colors.grey, size: 32),
+              ),
+              
+              // Community info on the right
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16 * widthRatio),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Community title
-                      Text(
-                        community.communityName,
-                        style: TextStyle(
-                          color: const Color(0xFF121212),
-                          fontSize: 16 * widthRatio,
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      
-                      SizedBox(height: 4 * heightRatio),
-                      
-                      // Community description
-                      if (community.announcement != null && community.announcement!.isNotEmpty) ...[
-                        Text(
-                          community.announcement!,
-                          style: TextStyle(
-                            color: const Color(0xFF8E8E8E),
-                            fontSize: 14 * widthRatio,
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                            height: 1.4,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Community title
+                          Text(
+                            community.communityName,
+                            style: TextStyle(
+                              color: const Color(0xFF121212),
+                              fontSize: 16 * widthRatio,
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 8 * heightRatio),
-                      ],
+                          
+                          SizedBox(height: 4 * heightRatio),
+                          
+                          // Community description
+                          if (community.announcement != null && community.announcement!.isNotEmpty) ...[
+                            Text(
+                              community.announcement!,
+                              style: TextStyle(
+                                color: const Color(0xFF8E8E8E),
+                                fontSize: 14 * widthRatio,
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w400,
+                                height: 1.4,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
                       
                       // Member count at bottom right
                       Row(
@@ -727,8 +732,8 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1233,9 +1238,26 @@ Widget _buildTop5CommunityList(double widthRatio, double heightRatio) {
                     case 'signout':
                       await _handleSignOut();
                       break;
+                    case 'admin_add_community':
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const AdminAddCommunityPage(),
+                        ),
+                      );
+                      break;
                   }
                 },
                 itemBuilder: (BuildContext context) => [
+                  const PopupMenuItem<String>(
+                    value: 'admin_add_community',
+                    child: Row(
+                      children: [
+                        Icon(Icons.add_business, color: Color(0xFF5F37CF)),
+                        SizedBox(width: 8),
+                        Text('Admin Add Community'),
+                      ],
+                    ),
+                  ),
                   const PopupMenuItem<String>(
                     value: 'signout',
                     child: Row(
