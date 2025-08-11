@@ -365,8 +365,8 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
                     // Grid of recommended community cards with proper constraints
                     ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxHeight: 220 * heightRatio,
-                        maxWidth: constraints.maxWidth - (32 * widthRatio),
+                        maxHeight: (220 * heightRatio).clamp(100.0, double.infinity),
+                        maxWidth: (constraints.maxWidth - (32 * widthRatio)).clamp(200.0, double.infinity),
                       ),
                       child: _buildRecommendedCommunityGrid(widthRatio, heightRatio),
                     ),

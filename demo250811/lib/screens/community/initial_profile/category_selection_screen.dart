@@ -341,7 +341,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
             children: _availableCategories.map((category) => 
               ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: constraints.maxWidth * 0.45, // Max width per chip
+                  maxWidth: (constraints.maxWidth * 0.45).clamp(80.0, double.infinity), // Ensure maxWidth >= minWidth
                   minWidth: 80.0, // Minimum width
                 ),
                 child: _buildCategoryChip(category, widthRatio, constraints.maxWidth),
@@ -372,7 +372,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         constraints: BoxConstraints(
-          maxWidth: maxWidth * 0.45,
+          maxWidth: (maxWidth * 0.45).clamp(80.0, double.infinity),
           minHeight: 36.0,
         ),
         padding: EdgeInsets.symmetric(

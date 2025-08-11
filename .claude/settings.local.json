@@ -6,7 +6,9 @@
       "Bash(flutter analyze:*)",
       "Bash(flutter build:*)",
       "Bash(rm:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
