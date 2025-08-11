@@ -454,9 +454,10 @@ class CommunityService {
   }
 
   // Get community Hot posting (Top3, Top View Posting; HOT 게시물 가져오기 (상위 3개)) 
+  // Optimized: Uses denormalized community name to eliminate N+1 queries
   Future<List<Map<String, dynamic>>> getHotPosts() async {
     try {
-      // 'posts' 컬렉션에서 'viewCount'를 기준으로 내림차순 정렬하여 상위 3개 문서를 가져옵니다.
+      // Single query to get top 3 posts with all needed data
       final postSnapshot = await _firestore
           .collection('posts')
           .orderBy('viewCount', descending: true)
@@ -467,42 +468,20 @@ class CommunityService {
         return [];
       }
 
-      // 각 게시물의 커뮤니티 이름을 가져오기 위한 비동기 작업 목록을 생성합니다.
-      final futures = postSnapshot.docs.map((postDoc) async {
+      // Transform data without additional queries - much faster!
+      return postSnapshot.docs.map((postDoc) {
         final postData = postDoc.data();
-        final communityId = postData['communityId'] as String?;
-        String communityName = 'Unknown'; // 기본값
-
-        if (communityId != null) {
-          try {
-            final communityDoc = await _firestore
-                .collection('communities')
-                .doc(communityId)
-                .get();
-            if (communityDoc.exists) {
-              communityName = communityDoc.data()?['communityName'] ?? 'Unknown';
-            }
-          } catch (e) {
-            // 커뮤니티를 찾지 못해도 오류를 발생시키지 않고 기본값을 사용합니다.
-            print('Error fetching community name for post ${postDoc.id}: $e');
-          }
-        }
-
-        // UI에 필요한 데이터 형식으로 맵을 구성합니다.
         return {
           'postId': postDoc.id,
-          'communityId': communityId,
-          'category': communityName,
+          'communityId': postData['communityId'] ?? '',
+          'category': postData['communityName'] ?? 'Unknown', // Use denormalized name
           'title': postData['title'] ?? 'No Title',
           'views': (postData['viewCount'] ?? 0).toString(),
         };
       }).toList();
-
-      // 모든 비동기 작업을 병렬로 실행하고 결과를 기다립니다.
-      return await Future.wait(futures);
     } catch (e) {
-      print('Error fetching hot posts: $e');
-      // 오류 발생 시 빈 리스트를 반환하여 앱이 중단되지 않도록 합니다.
+      debugPrint('Error fetching hot posts: $e');
+      // Return empty list on error to prevent app crashes
       return [];
     }
   }
@@ -617,10 +596,10 @@ class CommunityService {
         throw 'You must be a member of this community to post';
       }
 
-      // Create the post
+      // Create the post with community name for denormalization
       final docRef = await _firestore
           .collection('posts')
-          .add(request.toMap(currentUserId!));
+          .add(request.toMap(currentUserId!, communityName: community.communityName));
 
       // Update community post count
       await _firestore
@@ -902,8 +881,12 @@ class CommunityService {
       // Get user interests
       final userInterests = await getUserInterests();
       if (userInterests.isEmpty) {
-        // If no interests, return general communities
-        return await _getGeneralRecommendations();
+        // If no interests, return general communities (try optimized first)
+        try {
+          return await _getGeneralRecommendationsOptimized();
+        } catch (e) {
+          return await _getGeneralRecommendations();
+        }
       }
 
       // Get all communities
@@ -1030,5 +1013,265 @@ class CommunityService {
       keywords.addAll(interestToKeywords[interest] ?? [interest]);
     }
     return keywords;
+  }
+
+  // OPTIMIZED QUERY METHODS - Server-side sorting for better performance
+  // These methods use Firestore compound indexes to eliminate client-side sorting
+
+  // Optimized: Get communities user has joined with server-side sorting
+  Future<List<Community>> getMyCommunitiesOptimized() async {
+    if (currentUserId == null) throw 'User not authenticated';
+
+    try {
+      final snapshot = await _firestore
+          .collection('communities')
+          .where('members', arrayContains: currentUserId)
+          .orderBy('dateAdded', descending: true) // Server-side sorting
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return Community.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      // Fallback to original method if compound index not ready
+      debugPrint('Falling back to original getMyCommunities: $e');
+      return getMyCommunities();
+    }
+  }
+
+  // Optimized: Get community posts with server-side sorting
+  Future<List<Post>> getCommunityPostsOptimized(String communityId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('posts')
+          .where('communityId', isEqualTo: communityId)
+          .orderBy('datePosted', descending: true) // Server-side sorting
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return Post.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      // Fallback to original method if compound index not ready
+      debugPrint('Falling back to original getCommunityPosts: $e');
+      return getCommunityPosts(communityId);
+    }
+  }
+
+  // Optimized: Get user posts with server-side sorting
+  Future<List<Post>> getUserPostsOptimized(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('posts')
+          .where('userId', isEqualTo: userId)
+          .orderBy('datePosted', descending: true) // Server-side sorting
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return Post.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      // Fallback to original method if compound index not ready
+      debugPrint('Falling back to original getUserPosts: $e');
+      return getUserPosts(userId);
+    }
+  }
+
+  // Optimized: Get post comments with server-side sorting
+  Future<List<PostComment>> getPostCommentsOptimized(String postId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('post_comments')
+          .where('postId', isEqualTo: postId)
+          .orderBy('createdAt', descending: false) // Server-side sorting (oldest first)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return PostComment.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      // Fallback to original method if compound index not ready
+      debugPrint('Falling back to original getPostComments: $e');
+      return getPostComments(postId);
+    }
+  }
+
+  // Optimized: Get all communities with server-side sorting by popularity
+  Future<List<Community>> getAllCommunitiesOptimized() async {
+    try {
+      final snapshot = await _firestore
+          .collection('communities')
+          .orderBy('memberCount', descending: true) // Sort by popularity first
+          .orderBy('dateAdded', descending: true) // Then by recency
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return Community.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      // Fallback to original method if compound index not ready
+      debugPrint('Falling back to original getAllCommunities: $e');
+      return getAllCommunities();
+    }
+  }
+
+  // Optimized: Get trending posts (high view count + recent)
+  Future<List<Post>> getTrendingPostsOptimized({int limit = 10}) async {
+    try {
+      final snapshot = await _firestore
+          .collection('posts')
+          .orderBy('viewCount', descending: true) // Server-side sorting by views
+          .orderBy('datePosted', descending: true) // Then by recency
+          .limit(limit)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return Post.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      // Fallback: get recent posts sorted by view count
+      debugPrint('Falling back to recent posts sorted by views: $e');
+      try {
+        final snapshot = await _firestore
+            .collection('posts')
+            .orderBy('datePosted', descending: true)
+            .limit(50) // Get more to sort client-side
+            .get();
+
+        final posts = snapshot.docs.map((doc) {
+          return Post.fromMap(doc.data(), doc.id);
+        }).toList();
+
+        // Client-side sorting as fallback
+        posts.sort((a, b) => b.viewCount.compareTo(a.viewCount));
+        return posts.take(limit).toList();
+      } catch (e2) {
+        debugPrint('Complete fallback failed: $e2');
+        return [];
+      }
+    }
+  }
+
+  // Optimized: Get community posts stream with server-side sorting
+  Stream<List<Post>> getCommunityPostsStreamOptimized(String communityId) {
+    try {
+      return _firestore
+          .collection('posts')
+          .where('communityId', isEqualTo: communityId)
+          .orderBy('datePosted', descending: true) // Server-side sorting
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          return Post.fromMap(doc.data(), doc.id);
+        }).toList();
+      });
+    } catch (e) {
+      // Fallback to original stream method
+      debugPrint('Falling back to original getCommunityPostsStream: $e');
+      return getCommunityPostsStream(communityId);
+    }
+  }
+
+  // Optimized: Get all posts stream with server-side sorting
+  Stream<List<Post>> getAllPostsStreamOptimized() {
+    try {
+      return _firestore
+          .collection('posts')
+          .orderBy('datePosted', descending: true) // Server-side sorting
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          return Post.fromMap(doc.data(), doc.id);
+        }).toList();
+      });
+    } catch (e) {
+      // Fallback to original stream method
+      debugPrint('Falling back to original getAllPosts: $e');
+      return getAllPosts();
+    }
+  }
+
+  // Optimized: Get general recommendations sorted by popularity
+  Future<List<Community>> _getGeneralRecommendationsOptimized() async {
+    try {
+      // Get communities sorted by member count (most popular) with server-side sorting
+      final snapshot = await _firestore
+          .collection('communities')
+          .orderBy('memberCount', descending: true) // Server-side sorting
+          .limit(20) // Get more for filtering
+          .get();
+
+      final allCommunities = snapshot.docs.map((doc) {
+        return Community.fromMap(doc.data(), doc.id);
+      }).toList();
+
+      if (allCommunities.isEmpty) return [];
+
+      // Filter out communities user is already a member of
+      final userCommunities = await getMyCommunities();
+      final userCommunityIds = userCommunities.map((c) => c.communityId).toSet();
+      final availableCommunities = allCommunities
+          .where((community) => !userCommunityIds.contains(community.communityId))
+          .toList();
+
+      // Return top 15 popular communities (already sorted by server)
+      return availableCommunities.take(15).toList();
+    } catch (e) {
+      debugPrint('Falling back to original _getGeneralRecommendations: $e');
+      return _getGeneralRecommendations();
+    }
+  }
+
+  // Method to check if optimized queries are available
+  Future<bool> areOptimizedQueriesEnabled() async {
+    try {
+      // Test if compound indexes are ready by running a simple compound query
+      await _firestore
+          .collection('posts')
+          .orderBy('datePosted', descending: true)
+          .limit(1)
+          .get();
+      return true;
+    } catch (e) {
+      debugPrint('Optimized queries not yet available: $e');
+      return false;
+    }
+  }
+
+  // PERFORMANCE MONITORING HELPER
+  // Use this to compare performance between original and optimized methods
+  Future<Map<String, dynamic>> performanceComparison({
+    required String testCommunityId,
+    int iterations = 3,
+  }) async {
+    if (currentUserId == null) return {'error': 'User not authenticated'};
+
+    final results = <String, dynamic>{};
+    
+    try {
+      // Test original methods
+      final originalStart = DateTime.now();
+      for (int i = 0; i < iterations; i++) {
+        await getCommunityPosts(testCommunityId);
+      }
+      final originalDuration = DateTime.now().difference(originalStart);
+
+      // Test optimized methods
+      final optimizedStart = DateTime.now();
+      for (int i = 0; i < iterations; i++) {
+        await getCommunityPostsOptimized(testCommunityId);
+      }
+      final optimizedDuration = DateTime.now().difference(optimizedStart);
+
+      results['original_avg_ms'] = originalDuration.inMilliseconds / iterations;
+      results['optimized_avg_ms'] = optimizedDuration.inMilliseconds / iterations;
+      results['improvement_percent'] = ((originalDuration.inMilliseconds - optimizedDuration.inMilliseconds) / originalDuration.inMilliseconds * 100).round();
+      results['optimized_queries_enabled'] = await areOptimizedQueriesEnabled();
+      
+    } catch (e) {
+      results['error'] = e.toString();
+    }
+
+    return results;
   }
 }

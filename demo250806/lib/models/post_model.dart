@@ -4,6 +4,7 @@ class Post {
   final String postId;
   final String userId; // User who posted
   final String communityId;
+  final String communityName; // Denormalized community name for performance
   final int commentCount;
   final int viewCount; // Number of views
   final String title;
@@ -18,6 +19,7 @@ class Post {
     required this.postId,
     required this.userId,
     required this.communityId,
+    required this.communityName,
     required this.commentCount,
     required this.viewCount,
     required this.title,
@@ -35,6 +37,7 @@ class Post {
       'postId': postId,
       'userId': userId,
       'communityId': communityId,
+      'communityName': communityName,
       'commentCount': commentCount,
       'viewCount': viewCount,
       'title': title,
@@ -53,6 +56,7 @@ class Post {
       postId: documentId,
       userId: map['userId'] ?? '',
       communityId: map['communityId'] ?? '',
+      communityName: map['communityName'] ?? 'Unknown Community', // Fallback for old posts
       commentCount: map['commentCount'] ?? 0,
       viewCount: map['viewCount'] ?? 0,
       title: map['title'] ?? '',
@@ -70,6 +74,7 @@ class Post {
     String? postId,
     String? userId,
     String? communityId,
+    String? communityName,
     int? commentCount,
     int? viewCount,
     String? title,
@@ -84,6 +89,7 @@ class Post {
       postId: postId ?? this.postId,
       userId: userId ?? this.userId,
       communityId: communityId ?? this.communityId,
+      communityName: communityName ?? this.communityName,
       commentCount: commentCount ?? this.commentCount,
       viewCount: viewCount ?? this.viewCount,
       title: title ?? this.title,
@@ -127,11 +133,12 @@ class CreatePostRequest {
     this.imageUrl,
   });
 
-  Map<String, dynamic> toMap(String userId) {
+  Map<String, dynamic> toMap(String userId, {String? communityName}) {
     final now = DateTime.now();
     return {
       'userId': userId,
       'communityId': communityId,
+      'communityName': communityName ?? 'Unknown Community', // Include community name
       'title': title,
       'caption': caption,
       'anonymous': anonymous,

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/korean_auth_service.dart';
+import '../services/device_info_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -30,8 +31,22 @@ class _SplashScreenState extends State<SplashScreen> {
     // Start animation sequence
     _startAnimationSequence();
     
+    // Collect device info with context after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _collectDeviceInfo();
+    });
+    
     // Check authentication and handle OAuth callback
     _checkAuthenticationState();
+  }
+
+  void _collectDeviceInfo() async {
+    try {
+      final deviceInfoService = DeviceInfoService();
+      await deviceInfoService.collectAllDeviceInfo(context);
+    } catch (e) {
+      print('Device info collection failed: $e');
+    }
   }
 
   void _checkAuthenticationState() async {

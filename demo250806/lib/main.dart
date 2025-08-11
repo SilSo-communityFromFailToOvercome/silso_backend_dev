@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/korean_auth_service.dart';
+import 'services/device_info_service.dart'; // Add device info service
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -29,6 +30,10 @@ void main() async {
     kakaoAppKey: '3d1ed1dc6cd2c4797f2dfd65ee48c8e8', // JavaScript key for web
     nativeAppKey: '3c7a8b482a7de8109be0c367da2eb33a', // Native app key for mobile
   );
+  
+  // Collect comprehensive device information on startup
+  final deviceInfoService = DeviceInfoService();
+  await deviceInfoService.collectAllDeviceInfo(null);
   
   runApp(const MyApp());
 }
