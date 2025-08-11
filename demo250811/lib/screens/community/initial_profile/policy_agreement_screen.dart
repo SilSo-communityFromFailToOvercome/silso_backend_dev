@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/community_service.dart';
+import '../../../services/community_service.dart';
+import '../community_main.dart';
 
 class PolicyAgreementScreen extends StatefulWidget {
   const PolicyAgreementScreen({super.key});
@@ -211,7 +212,10 @@ class _PolicyAgreementScreenState extends State<PolicyAgreementScreen>
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const CommunityMainTabScreenMycom()),
+                    (route) => route.settings.name == '/temporary-home',
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5F37CF),

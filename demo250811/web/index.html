@@ -38,6 +38,23 @@
   
   <!-- Kakao JavaScript SDK -->
   <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
+  
+  <!-- Firebase Auth Configuration -->
+  <script>
+    // Hide reCAPTCHA badge
+    window.addEventListener('load', function() {
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .grecaptcha-badge {
+          visibility: hidden !important;
+          opacity: 0 !important;
+          position: absolute !important;
+          left: -9999px !important;
+        }
+      `;
+      document.head.appendChild(style);
+    });
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

@@ -4,10 +4,15 @@ import 'firebase_options.dart';
 import 'services/korean_auth_service.dart';
 import 'screens/splash_screen.dart';
 // Community UI imports
-import 'screens/community/login_screen.dart';
-import 'screens/community/intro_after_login_splash2.dart';  // Community flow 
+import 'screens/login/login_screen.dart';
+import 'screens/login/intro_after_login_splash2.dart';  // After login flow 
 import 'screens/community/community_main.dart';
 import 'screens/temporary_home.dart'; // Temporary home page
+// Initial profile setup screens
+import 'screens/community/initial_profile/intro_community_splash2.dart';
+import 'screens/community/initial_profile/category_selection_screen.dart';
+import 'screens/community/initial_profile/profile_information_screen.dart';
+import 'screens/community/initial_profile/policy_agreement_screen.dart';
 
  
 
@@ -50,6 +55,11 @@ class MyApp extends StatelessWidget {
         '/after-login-splash': (context) => const AfterLoginSplashScreen(), // Korean UI
         '/temporary-home': (context) => const TemporaryHomePage(), // Temporary home
         '/mvp_community' : (context) => const CommunityMainTabScreenMycom(), // Korean UI
+        // Initial profile setup flow
+        '/intro-community-splash': (context) => const IntroCommunitySplash(),
+        '/category-selection': (context) => const CategorySelectionScreen(),
+        '/profile-information': (context) => const ProfileInformationScreen(),
+        '/policy-agreement': (context) => const PolicyAgreementScreen(),
       },
     );
   }

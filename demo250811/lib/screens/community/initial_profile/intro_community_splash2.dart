@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-// 1. Import the new destination screen.
-//    Ensure the path is correct for your project structure.
-import 'community_main.dart'; 
+import 'category_selection_screen.dart'; 
 
 class IntroCommunitySplash extends StatefulWidget {
   const IntroCommunitySplash({super.key});
@@ -21,7 +19,7 @@ class _IntroCommunitySplashState extends State<IntroCommunitySplash> {
       if (mounted) {
         // 2. Change the navigation destination to CommunityMainTabScreenMycom.
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const CommunityMainTabScreenMycom()),
+          MaterialPageRoute(builder: (context) => const CategorySelectionScreen()),
         );
       }
     });

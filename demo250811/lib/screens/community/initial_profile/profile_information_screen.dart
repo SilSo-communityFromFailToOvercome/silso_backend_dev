@@ -3,7 +3,7 @@ import 'dart:async'; // Timer를 사용하기 위해 import 합니다.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // 필요한 서비스와 화면을 import 합니다.
-import '../../services/community_service.dart';
+import '../../../services/community_service.dart';
 import 'policy_agreement_screen.dart'; // 다음 화면으로 이동하기 위해 필요합니다.
 
 /// 사용자의 프로필 정보를 입력받는 화면입니다.

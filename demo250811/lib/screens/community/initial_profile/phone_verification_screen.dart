@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../services/community_service.dart';
+import '../../../services/community_service.dart';
 import 'policy_agreement_screen.dart';
 
 class PhoneVerificationScreen extends StatefulWidget {

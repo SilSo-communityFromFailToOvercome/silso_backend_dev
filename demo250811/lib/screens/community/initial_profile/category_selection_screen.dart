@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/community_service.dart';
-import '../../widgets/error_handler_widget.dart';
+import '../../../services/community_service.dart';
+import '../../../widgets/error_handler_widget.dart';
 import 'profile_information_screen.dart';
 
 /// Individual category item representation

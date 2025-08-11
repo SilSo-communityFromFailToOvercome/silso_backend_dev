@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'community/community_main.dart';
+import 'community/initial_profile/intro_community_splash2.dart';
+import '../services/community_service.dart';
+import '../services/auth_service.dart';
 
 class TemporaryHomePage extends StatefulWidget {
   const TemporaryHomePage({super.key});
@@ -10,6 +13,10 @@ class TemporaryHomePage extends StatefulWidget {
 }
 
 class _TemporaryHomePageState extends State<TemporaryHomePage> {
+  final CommunityService _communityService = CommunityService();
+  final AuthService _authService = AuthService();
+  bool _isSigningOut = false;
+
   String _getUserDisplayName() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -25,6 +32,27 @@ class _TemporaryHomePageState extends State<TemporaryHomePage> {
     return "Guest";
   }
 
+  Future<void> _signOut() async {
+    setState(() => _isSigningOut = true);
+
+    try {
+      await _authService.signOut();
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSigningOut = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('로그아웃 실패: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Responsive design calculations
@@ -37,6 +65,39 @@ class _TemporaryHomePageState extends State<TemporaryHomePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFAFAFA),
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 16 * widthRatio),
+            child: TextButton(
+              onPressed: _isSigningOut ? null : _signOut,
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF8E8E8E),
+              ),
+              child: _isSigningOut
+                  ? SizedBox(
+                      width: 16 * widthRatio,
+                      height: 16 * widthRatio,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8E8E8E)),
+                      ),
+                    )
+                  : Text(
+                      '로그아웃',
+                      style: TextStyle(
+                        fontSize: 14 * widthRatio,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Pretendard',
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24 * widthRatio),
@@ -60,12 +121,27 @@ class _TemporaryHomePageState extends State<TemporaryHomePage> {
               
               // Community button
               ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const CommunityMainTabScreenMycom(),
-                    ),
-                  );
+                onPressed: () async {
+                  // Check if user has completed community setup
+                  final hasCompletedSetup = await _communityService.hasCompletedCommunitySetup();
+                  
+                  if (!mounted) return;
+                  
+                  if (hasCompletedSetup) {
+                    // Go directly to community main
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const CommunityMainTabScreenMycom(),
+                      ),
+                    );
+                  } else {
+                    // Go through the setup flow
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const IntroCommunitySplash(),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5F37CF),
