@@ -17,7 +17,7 @@ class _AfterLoginSplashScreenState extends State<AfterLoginSplashScreen> {
     // pushReplacementNamed를 사용하여 이 화면이 네비게이션 스택에서 제거되도록 합니다.
     Timer(const Duration(seconds: 3), () {
       if (mounted) { // 위젯이 여전히 화면에 있는지 확인합니다.
-        Navigator.of(context).pushReplacementNamed('/mvp_community');
+        Navigator.of(context).pushReplacementNamed('/temporary-home');
       }
     });
   }

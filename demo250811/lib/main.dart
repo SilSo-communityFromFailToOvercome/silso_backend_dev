@@ -7,6 +7,7 @@ import 'screens/splash_screen.dart';
 import 'screens/community/login_screen.dart';
 import 'screens/community/intro_after_login_splash2.dart';  // Community flow 
 import 'screens/community/community_main.dart';
+import 'screens/temporary_home.dart'; // Temporary home page
 
  
 
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => SplashScreen(),
         '/login': (context) => const LoginScreen(), // Korean UI
         '/after-login-splash': (context) => const AfterLoginSplashScreen(), // Korean UI
+        '/temporary-home': (context) => const TemporaryHomePage(), // Temporary home
         '/mvp_community' : (context) => const CommunityMainTabScreenMycom(), // Korean UI
       },
     );
