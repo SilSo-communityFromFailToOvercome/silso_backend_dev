@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'court_main.dart';
 import 'add_court.dart';
 import 'court_history.dart';
+import 'voting_case_list.dart';
 import '../services/court_service.dart';
 
 // Court list page - choose live sessions or create new court
@@ -49,6 +50,31 @@ class _CourtListScreenState extends State<CourtListScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          // Voting case list button
+          Padding(
+            padding: EdgeInsets.only(right: 8 * widthRatio),
+            child: IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const VotingCaseListScreen(),
+                  ),
+                );
+              },
+              icon: Container(
+                padding: EdgeInsets.all(8 * widthRatio),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF059669),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.how_to_vote,
+                  color: Colors.white,
+                  size: 20 * widthRatio,
+                ),
+              ),
+            ),
+          ),
           // History button to view previous sessions
           Padding(
             padding: EdgeInsets.only(right: 8 * widthRatio),
@@ -209,7 +235,7 @@ class _CourtListScreenState extends State<CourtListScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withOpacity(0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -263,7 +289,7 @@ class _CourtListScreenState extends State<CourtListScreen> {
                     vertical: 4 * widthRatio,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5F37CF).withValues(alpha: 0.1),
+                    color: const Color(0xFF5F37CF).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12 * widthRatio),
                   ),
                   child: Text(

@@ -357,10 +357,10 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF5F37CF).withValues(alpha: 0.08),
+                  color: const Color(0xFF5F37CF).withOpacity(0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFF5F37CF).withValues(alpha: 0.2),
+                    color: const Color(0xFF5F37CF).withOpacity(0.2),
                     width: 1,
                   ),
                 ),
@@ -796,7 +796,7 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
                   imageAssetPath: 'assets/background/background.png',
                   fit: BoxFit.cover,
                   enableOverlay: true,
-                  overlayColor: Colors.black.withValues(alpha: SelectiveTransparencyController.backgroundOverlayOpacity),
+                  overlayColor: Colors.black.withOpacity(SelectiveTransparencyController.backgroundOverlayOpacity),
                   child: const SizedBox.expand(),
                 ),
               ),
@@ -877,14 +877,14 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
               children: [
                 Icon(
                   Icons.error_outline,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: Colors.white.withOpacity( 0.7),
                   size: 48,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Error loading messages',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withOpacity( 0.7),
                     fontSize: 16,
                     fontFamily: 'Pretendard',
                   ),
@@ -898,7 +898,7 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
           return Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(
-                Colors.white.withValues(alpha: 0.7),
+                Colors.white.withOpacity( 0.7),
               ),
             ),
           );
@@ -944,14 +944,14 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
               children: [
                 Icon(
                   Icons.chat_outlined,
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: Colors.white.withOpacity( 0.5),
                   size: 64,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No messages yet',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withOpacity( 0.7),
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Pretendard',
@@ -961,7 +961,7 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
                 Text(
                   'Be the first to share your thoughts!',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: Colors.white.withOpacity( 0.5),
                     fontSize: 14,
                     fontFamily: 'Pretendard',
                   ),

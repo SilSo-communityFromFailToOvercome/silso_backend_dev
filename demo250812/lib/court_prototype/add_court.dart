@@ -204,10 +204,10 @@ class _AddCourtScreenState extends State<AddCourtScreen> {
                       Container(
                         padding: EdgeInsets.all(16 * widthRatio),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF5F37CF).withValues(alpha: 0.1),
+                          color: const Color(0xFF5F37CF).withOpacity( 0.1),
                           borderRadius: BorderRadius.circular(12 * widthRatio),
                           border: Border.all(
-                            color: const Color(0xFF5F37CF).withValues(alpha: 0.2),
+                            color: const Color(0xFF5F37CF).withOpacity( 0.2),
                             width: 1,
                           ),
                         ),
