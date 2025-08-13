@@ -10,6 +10,7 @@ class CourtChatMessage {
   final ChatMessageType messageType; // guilty, notGuilty, or system
   final DateTime timestamp;
   final bool isDeleted;
+  final bool isSystemMessage; // Special display for system messages like silence
 
   const CourtChatMessage({
     required this.id,
@@ -20,6 +21,7 @@ class CourtChatMessage {
     required this.messageType,
     required this.timestamp,
     this.isDeleted = false,
+    this.isSystemMessage = false,
   });
 
   // Convert to map for Firestore storage
@@ -32,6 +34,7 @@ class CourtChatMessage {
       'messageType': messageType.name,
       'timestamp': Timestamp.fromDate(timestamp),
       'isDeleted': isDeleted,
+      'isSystemMessage': isSystemMessage,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
@@ -52,6 +55,7 @@ class CourtChatMessage {
           ? (data['timestamp'] as Timestamp).toDate()
           : DateTime.now(),
       isDeleted: data['isDeleted'] ?? false,
+      isSystemMessage: data['isSystemMessage'] ?? false,
     );
   }
 
@@ -65,6 +69,7 @@ class CourtChatMessage {
     ChatMessageType? messageType,
     DateTime? timestamp,
     bool? isDeleted,
+    bool? isSystemMessage,
   }) {
     return CourtChatMessage(
       id: id ?? this.id,
@@ -75,6 +80,7 @@ class CourtChatMessage {
       messageType: messageType ?? this.messageType,
       timestamp: timestamp ?? this.timestamp,
       isDeleted: isDeleted ?? this.isDeleted,
+      isSystemMessage: isSystemMessage ?? this.isSystemMessage,
     );
   }
 }

@@ -20,7 +20,7 @@ class CourtSystemConfig {
   static const double controversyRatioMin = 0;
   static const double controversyRatioMax = 100;
   static const int votingPhaseDurationHours = 24;
-  static const int votesPerUserPerDay = 10;
+  static const int votesPerUserPerDay = 20;
   static const int caseExpiryDays = 7;
   static const int revoteCooldownHours = 1;
 
@@ -33,14 +33,14 @@ class CourtSystemConfig {
 
   // === CHAT & MODERATION ===
   static const int silenceTriggerMessageCount = 5;
-  static const int silenceDurationSeconds = 10;
+  static const int silenceDurationSeconds = 5; // Duration for silence countdown
   static const int maxMessageLength = 500;
   static const int messageRateLimitPerMinute = 10;
   static const bool autoModerationEnabled = true;
   static const bool profanityFilterEnabled = true;
 
   // === USER PARTICIPATION LIMITS ===
-  static const int maxCasesCreatedPerDay = 3;
+  static const int maxCasesCreatedPerDay = 100;
   static const int maxCourtSessionsJoinedSimultaneously = 3;
   static const int courtCreationCooldownHours = 6;
   static const int reputationRequiredForCaseCreation = 10;
@@ -48,7 +48,7 @@ class CourtSystemConfig {
 
   // === SYSTEM PERFORMANCE ===
   static const int databaseQueryTimeoutSeconds = 30;
-  static const int realTimeUpdateIntervalSeconds = 2;
+  static const int realTimeUpdateIntervalSeconds = 1; // Faster updates for live sessions
   static const int analyticsCalculationIntervalMinutes = 15;
   static const int cacheDurationMinutes = 5;
   static const int imageUploadMaxSizeMB = 5;

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/case_model.dart';
 import '../services/case_service.dart';
+import '../services/court_service.dart';
 import '../config/court_config.dart';
 import 'add_case_screen.dart';
 import 'case_detail_screen.dart';
-import 'court_session_screen.dart';
+import 'court_main.dart';
 import '../widgets/case_card_widget.dart';
 import '../widgets/queue_status_widget.dart';
 
@@ -19,6 +20,7 @@ class CaseVotingScreen extends StatefulWidget {
 
 class _CaseVotingScreenState extends State<CaseVotingScreen> with TickerProviderStateMixin {
   final CaseService _caseService = CaseService();
+  final CourtService _courtService = CourtService();
   late TabController _tabController;
   int _selectedIndex = 0;
 
@@ -527,12 +529,26 @@ class _CaseVotingScreenState extends State<CaseVotingScreen> with TickerProvider
     );
   }
 
-  void _navigateToCourtSession(CaseModel caseModel) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CourtSessionScreen(caseModel: caseModel),
-      ),
-    );
+  void _navigateToCourtSession(CaseModel caseModel) async {
+    // Find the court session for this case
+    if (caseModel.courtSessionId != null) {
+      try {
+        final courtSession = await _courtService.getCourtSession(caseModel.courtSessionId!);
+        if (mounted && courtSession != null) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => CourtPrototypeScreen(courtSession: courtSession),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load court session: $e')),
+          );
+        }
+      }
+    }
   }
 
   // Vote on case

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math; // Needed for PI constant
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/community/community_search_page.dart';
 import 'services/court_service.dart';
 import 'services/case_service.dart';
 import 'models/case_model.dart';
-import 'add_court.dart';
+import 'models/court_session_model.dart';
 import 'screens/case_voting_screen.dart';
-import 'court_main.dart' as court_main;
+import 'screens/court_main.dart' as court_main;
+import 'config/court_config.dart';
 
 
 // Removed unused _TrialData class since we now use real data
@@ -25,6 +28,7 @@ class _SilsoCourtPageState extends State<SilsoCourtPage>
   late TabController _tabController;
   late PageController _pageController;
   int _currentPage = 0;
+  Timer? _refreshTimer;
 
   final CourtService _courtService = CourtService();
   final CaseService _caseService = CaseService();
@@ -42,13 +46,32 @@ class _SilsoCourtPageState extends State<SilsoCourtPage>
     _liveSessionsStream = _courtService.getLiveCourtSessions();
     _promotedCasesStream = _caseService.getPromotedCases();
     _votingCasesStream = _caseService.getActiveVotingCases();
+    
+    // Set up refresh timer for live updates
+    _startRefreshTimer();
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _tabController.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _startRefreshTimer() {
+    _refreshTimer = Timer.periodic(
+      Duration(seconds: CourtSystemConfig.realTimeUpdateIntervalSeconds),
+      (timer) {
+        if (mounted) {
+          setState(() {
+            // Refresh the streams by recreating them
+            _liveSessionsStream = _courtService.getLiveCourtSessions();
+            _promotedCasesStream = _caseService.getPromotedCases();
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -243,58 +266,75 @@ class _SilsoCourtPageState extends State<SilsoCourtPage>
   }
 
   Widget _buildCourthouseTab() {
-    return StreamBuilder<List<CourtSessionData>>(
-      stream: _liveSessionsStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6037D0)),
-          );
-        }
-        
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.gavel,
-                  color: Colors.white.withOpacity(0.5),
-                  size: 64,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '진행 중인 재판이 없습니다',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 16,
-                    fontFamily: 'Pretendard',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '사건이 승급되면 여기에 표시됩니다',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
-                    fontSize: 14,
-                    fontFamily: 'Pretendard',
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-        
-        final liveSessions = snapshot.data!;
-        
-        return ListView.separated(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          itemCount: liveSessions.length,
-          itemBuilder: (context, index) => _buildCourthouseCard(liveSessions[index]),
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-        );
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() {
+          _liveSessionsStream = _courtService.getLiveCourtSessions();
+        });
+        // Wait a bit for the stream to update
+        await Future.delayed(const Duration(milliseconds: 500));
       },
+      color: const Color(0xFF6037D0),
+      backgroundColor: const Color(0xFF1E1E1E),
+      child: StreamBuilder<List<CourtSessionData>>(
+        stream: _liveSessionsStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF6037D0)),
+            );
+          }
+          
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: 400,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.gavel,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        size: 64,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '진행 중인 재판이 없습니다',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 16,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '사건이 승급되면 여기에 표시됩니다',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 14,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+          
+          final liveSessions = snapshot.data!;
+          
+          return ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: liveSessions.length,
+            itemBuilder: (context, index) => _buildCourthouseCard(liveSessions[index]),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+          );
+        },
+      ),
     );
   }
 
@@ -427,7 +467,7 @@ class _SilsoCourtPageState extends State<SilsoCourtPage>
                     title: caseModel.title,
                     timeLeft: _formatCaseTimeLeft(caseModel),
                     isCase: true,
-                    onTap: () => _showVoteModal(context, caseModel.title, true),
+                    onTap: () => _showVoteModal(context, caseModel.title, true, caseModel),
                   );
                 },
                 separatorBuilder: (context, index) => const SizedBox(height: 24),
@@ -882,13 +922,13 @@ class _SilsoCourtPageState extends State<SilsoCourtPage>
   }
 
   // [#MODIFIED] This modal is for active cases (the '사건' tab)
-  void _showVoteModal(BuildContext context, String title, bool isCase) {
-    if (!isCase) return;
+  void _showVoteModal(BuildContext context, String title, bool isCase, [CaseModel? caseModel]) {
+    if (!isCase || caseModel == null) return;
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.7),
       builder: (BuildContext context) {
-        return VoteModal(caseTitle: title);
+        return VoteModal(caseModel: caseModel, caseService: _caseService);
       },
     );
   }
@@ -1028,10 +1068,11 @@ class _SilsoCourtPageState extends State<SilsoCourtPage>
 
  enum VoteChoice { none, pros, cons }
 
-// This modal is for voting on active cases. No changes here.
+// This modal is for voting on active cases.
 class VoteModal extends StatefulWidget {
-  final String caseTitle;
-  const VoteModal({super.key, required this.caseTitle});
+  final CaseModel caseModel;
+  final CaseService caseService;
+  const VoteModal({super.key, required this.caseModel, required this.caseService});
 
   @override
   State<VoteModal> createState() => _VoteModalState();
@@ -1040,19 +1081,138 @@ class VoteModal extends StatefulWidget {
 class _VoteModalState extends State<VoteModal> {
   VoteChoice _voteChoice = VoteChoice.none;
   bool _isVoted = false;
+  bool _isVoting = false;
+  String? _errorMessage;
 
   void _handleVote(VoteChoice choice) {
-    if (_isVoted) return;
+    if (_isVoted || _isVoting) return;
+    
     setState(() {
-      _voteChoice = choice;
-      _isVoted = true;
+      _isVoting = true;
+      _errorMessage = null;
     });
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        Navigator.of(context).pop();
+    _performVote(choice);
+  }
+
+  Future<void> _performVote(VoteChoice choice) async {
+    try {
+      // Check authentication first, sign in anonymously if needed
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        // Try to sign in anonymously for demo purposes
+        try {
+          final userCredential = await FirebaseAuth.instance.signInAnonymously();
+          user = userCredential.user;
+        } catch (authError) {
+          throw Exception('로그인이 필요합니다');
+        }
       }
-    });
+      
+      if (user == null) {
+        throw Exception('로그인이 필요합니다');
+      }
+      
+      // Cast the actual vote using CaseService
+      final voteType = choice == VoteChoice.pros ? CaseVoteType.notGuilty : CaseVoteType.guilty;
+      
+      await widget.caseService.voteOnCase(
+        caseId: widget.caseModel.id,
+        voteType: voteType,
+      );
+
+      if (mounted) {
+        setState(() {
+          _voteChoice = choice;
+          _isVoted = true;
+          _isVoting = false;
+        });
+
+        // Check if case was promoted after voting
+        final updatedCase = await widget.caseService.getCase(widget.caseModel.id);
+        final wasPromoted = updatedCase?.status == CaseStatus.promoted || updatedCase?.status == CaseStatus.qualified;
+
+        // Show success message and close modal
+        Future.delayed(const Duration(milliseconds: 1200), () {
+          if (mounted) {
+            Navigator.of(context).pop();
+            
+            // Only show voting completion message if case wasn't promoted
+            if (!wasPromoted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    choice == VoteChoice.pros ? '찬성 투표가 완료되었습니다!' : '반대 투표가 완료되었습니다!',
+                    style: const TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  backgroundColor: choice == VoteChoice.pros ? const Color(0xFF3146E6) : const Color(0xFFFF3838),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              );
+            } else {
+              // Show promotion message instead
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    '사건이 재판소로 승급되었습니다! 재판소 탭을 확인해보세요.',
+                    style: TextStyle(
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  backgroundColor: const Color(0xFF6037D0),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              );
+            }
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isVoting = false;
+          // Extract more user-friendly error message
+          String errorMsg = e.toString();
+          
+          // Remove common prefixes
+          errorMsg = errorMsg
+              .replaceFirst('Exception: ', '')
+              .replaceFirst('Failed to vote: ', '')
+              .replaceFirst('Error: Dart exception thrown from converted Future. Use the properties \'error\' to fetch the boxed error and \'stack\' to recover the stack trace.', '투표 처리 중 오류가 발생했습니다');
+          
+          // Common error translations
+          if (errorMsg.contains('User not authenticated')) {
+            errorMsg = '로그인이 필요합니다';
+          } else if (errorMsg.contains('already voted')) {
+            errorMsg = '이미 투표하셨습니다';
+          } else if (errorMsg.contains('Daily voting limit')) {
+            errorMsg = '일일 투표 제한에 도달했습니다';
+          } else if (errorMsg.contains('not in voting phase')) {
+            errorMsg = '투표 기간이 아닙니다';
+          } else if (errorMsg.contains('expired')) {
+            errorMsg = '투표 기간이 만료되었습니다';
+          } else if (errorMsg.contains('permission-denied') || errorMsg.contains('Permission denied')) {
+            errorMsg = '권한이 없습니다';
+          } else if (errorMsg.contains('network')) {
+            errorMsg = '네트워크 연결을 확인해주세요';
+          } else if (errorMsg.trim().isEmpty || errorMsg.length > 100) {
+            errorMsg = '투표 처리 중 오류가 발생했습니다';
+          }
+          
+          _errorMessage = errorMsg;
+        });
+      }
+    }
   }
 
   @override
@@ -1081,10 +1241,12 @@ class _VoteModalState extends State<VoteModal> {
                   _buildDocumentUi(
                     width: modalWidth, 
                     height: modalHeight,
-                    title: '사건',
-                    content: const Text(
-                      '카페에서 친구들이랑 모이기로 했는데\n먼저 와 있던 두 명이 나란히 앉아서 아이스라떼 마시고 있더라.\n남자는 여사친 빨대 정리해주고, 여자는 남사친 머리에 먼지 떼주고...\n딱 봐도 커플 분위기였는데 정작 본인들은 “10년 된 친구”래.\n\n근데 말이 되냐?\n그렇게 자연스럽게 다정한 사이가 진짜 아무 사이 아니라고?\n\n내 친구랑 나 10년 친구인데\n서로 컵도 안 만짐 ㅋㅋㅋ\n진심 있는 거 같지 않냐 ?',
-                      style: TextStyle(
+                    title: widget.caseModel.title,
+                    content: Text(
+                      widget.caseModel.description.isNotEmpty 
+                        ? widget.caseModel.description
+                        : '이 사건에 대한 상세 내용이 없습니다.',
+                      style: const TextStyle(
                         color: Colors.black,
                         fontSize: 14,
                         fontFamily: 'Pretendard',
@@ -1141,13 +1303,86 @@ class _VoteModalState extends State<VoteModal> {
         ),
       );
     }
+
+    if (_errorMessage != null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              _errorMessage!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 14,
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildButtons(),
+        ],
+      );
+    }
+
+    return _buildButtons();
+  }
+
+  Widget _buildButtons() {
     return SizedBox(
       height: 44,
       child: Row(
         children: [
-          Expanded(child: ElevatedButton(onPressed: () => _handleVote(VoteChoice.cons), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF3838).withOpacity(0.9), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 8)), child: const Text('반대', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)))),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _isVoting ? null : () => _handleVote(VoteChoice.cons),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF3838).withValues(alpha: 0.9),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+              child: _isVoting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('반대', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            ),
+          ),
           const SizedBox(width: 12),
-          Expanded(child: ElevatedButton(onPressed: () => _handleVote(VoteChoice.pros), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3146E6), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 8)), child: const Text('찬성', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)))),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _isVoting ? null : () => _handleVote(VoteChoice.pros),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3146E6),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+              child: _isVoting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('찬성', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            ),
+          ),
         ],
       ),
     );

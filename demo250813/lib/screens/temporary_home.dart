@@ -4,7 +4,6 @@ import 'community/community_main.dart';
 import 'community/initial_profile/intro_community_splash2.dart';
 import '../services/community_service.dart';
 import '../services/auth_service.dart';
-import '../court_prototype/court_list.dart';
 
 class TemporaryHomePage extends StatefulWidget {
   const TemporaryHomePage({super.key});
@@ -163,40 +162,6 @@ class _TemporaryHomePageState extends State<TemporaryHomePage> {
                 ),
               ),
               
-              SizedBox(height: 16 * heightRatio),
-              
-              // Contents button (temporary)
-              ElevatedButton(
-                onPressed: () {
-                  // Navigate to court list
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const CourtListScreen(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF5F37CF),
-                  padding: EdgeInsets.symmetric(vertical: 16 * heightRatio),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12 * widthRatio),
-                    side: const BorderSide(
-                      color: Color(0xFF5F37CF),
-                      width: 1.5,
-                    ),
-                  ),
-                  elevation: 1,
-                ),
-                child: Text(
-                  '실소재판소 (Court Prototype)',
-                  style: TextStyle(
-                    fontSize: 18 * widthRatio,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Pretendard',
-                  ),
-                ),
-              ),
             ],
           ),
         ),

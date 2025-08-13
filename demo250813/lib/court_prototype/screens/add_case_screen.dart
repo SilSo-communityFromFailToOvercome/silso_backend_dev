@@ -33,66 +33,131 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
     final double widthRatio = screenWidth / 393.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAFAFA),
+        backgroundColor: const Color(0xFF121212),
         elevation: 0,
         title: Text(
-          '사건 제출',
+          '게시글',
           style: TextStyle(
-            fontSize: 20 * widthRatio,
+            fontSize: 16 * widthRatio,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF121212),
+            color: const Color(0xFFFAFAFA),
             fontFamily: 'Pretendard',
           ),
         ),
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Color(0xFF121212)),
+          icon: const Icon(Icons.close, color: Color(0xFFFAFAFA)),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          TextButton(
+            onPressed: _isCreating ? null : _submitCase,
+            child: _isCreating
+                ? const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  )
+                : Text(
+                    '제출',
+                    style: TextStyle(
+                      color: const Color(0xFFFAFAFA),
+                      fontSize: 16 * widthRatio,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
+          ),
+        ],
       ),
       body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Form content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(24 * widthRatio),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Guidelines section
-                      _buildGuidelinesSection(widthRatio),
-                      
-                      SizedBox(height: 32 * widthRatio),
-                      
-                      // Category selection
-                      _buildCategorySection(widthRatio),
-                      
-                      SizedBox(height: 24 * widthRatio),
-                      
-                      // Title field
-                      _buildTitleField(widthRatio),
-                      
-                      SizedBox(height: 24 * widthRatio),
-                      
-                      // Description field
-                      _buildDescriptionField(widthRatio),
-                      
-                      SizedBox(height: 32 * widthRatio),
-                      
-                      // Voting info card
-                      _buildVotingInfoCard(widthRatio),
-                    ],
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 24 * widthRatio),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _titleController,
+                  maxLength: 100,
+                  style: TextStyle(
+                    fontSize: 20 * widthRatio,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFFAFAFA),
+                    fontFamily: 'Pretendard',
                   ),
+                  decoration: InputDecoration(
+                    hintText: '제목을 입력해주세요.',
+                    hintStyle: TextStyle(
+                      fontSize: 20 * widthRatio,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF8E8E8E),
+                      fontFamily: 'Pretendard',
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return '사건 제목을 입력해주세요';
+                    }
+                    if (value.trim().length < 10) {
+                      return '제목은 최소 10자 이상이어야 합니다';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              
-              // Submit button
-              _buildSubmitButton(widthRatio),
-            ],
+                                SizedBox(height: 24 * widthRatio),
+                //SizedBox(height: 12 * widthRatio),
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: null,
+                  minLines: 10,
+                  maxLength: 1000,
+                  style: TextStyle(
+                    fontSize: 14 * widthRatio,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFFFAFAFA),
+                    fontFamily: 'Pretendard',
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '재판소에 올릴 자신의 사건을 등록해주세요.',
+                    hintStyle: TextStyle(
+                      fontSize: 14 * widthRatio,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFFBDBDBD),
+                      fontFamily: 'Pretendard',
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
+                    counterStyle: TextStyle(
+                      fontSize: 12 * widthRatio,
+                      color: const Color(0xFFBDBDBD),
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return '사건 설명을 입력해주세요';
+                    }
+                    if (value.trim().length < 20) {
+                      return '설명은 최소 20자 이상이어야 합니다';
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 24 * widthRatio),
+                _buildCategorySection(widthRatio),
+                SizedBox(height: 24 * widthRatio),
+               SizedBox(height: 24 * widthRatio),
+                _buildGuidelinesSection(widthRatio),
+              ],
+            ),
           ),
         ),
       ),
@@ -104,10 +169,10 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
     return Container(
       padding: EdgeInsets.all(16 * widthRatio),
       decoration: BoxDecoration(
-        color: const Color(0xFF5F37CF).withValues(alpha: 0.1),
+        color: const   Color(0xFFFAFAFA).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12 * widthRatio),
         border: Border.all(
-          color: const Color(0xFF5F37CF).withValues(alpha: 0.2),
+          color: const Color(0xFFFAFAFA).withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -118,7 +183,7 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
             children: [
               Icon(
                 Icons.lightbulb_outline,
-                color: const Color(0xFF5F37CF),
+                color: const Color(0xFFFAFAFA),
                 size: 20 * widthRatio,
               ),
               SizedBox(width: 8 * widthRatio),
@@ -127,7 +192,7 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
                 style: TextStyle(
                   fontSize: 14 * widthRatio,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF5F37CF),
+                  color: const Color(0xFFFAFAFA),
                   fontFamily: 'Pretendard',
                 ),
               ),
@@ -142,7 +207,7 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
             '• 사실에 기반한 내용을 작성해주세요',
             style: TextStyle(
               fontSize: 12 * widthRatio,
-              color: const Color(0xFF5F37CF),
+              color: const Color(0xFFFAFAFA),
               fontFamily: 'Pretendard',
               height: 1.4,
             ),
@@ -162,7 +227,7 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
           style: TextStyle(
             fontSize: 16 * widthRatio,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF121212),
+            color: const Color(0xFFFAFAFA),
             fontFamily: 'Pretendard',
           ),
         ),
@@ -170,10 +235,10 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16 * widthRatio),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF2E2E2E), // Dark background for dropdown
             borderRadius: BorderRadius.circular(12 * widthRatio),
             border: Border.all(
-              color: const Color(0xFFE0E0E0),
+              color: const Color(0xFF424242), // Darker border
               width: 1,
             ),
           ),
@@ -181,9 +246,15 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
             child: DropdownButton<CaseCategory>(
               value: _selectedCategory,
               isExpanded: true,
+              dropdownColor: const Color(0xFF2E2E2E), // Dropdown menu background
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: const Color(0xFFBDBDBD),
+                size: 24 * widthRatio,
+              ),
               style: TextStyle(
                 fontSize: 16 * widthRatio,
-                color: const Color(0xFF121212),
+                color: const Color(0xFFFAFAFA), // Text color for selected item
                 fontFamily: 'Pretendard',
               ),
               onChanged: (CaseCategory? newValue) {
@@ -200,10 +271,20 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
                     children: [
                       Text(
                         category.iconData,
-                        style: TextStyle(fontSize: 16 * widthRatio),
+                        style: TextStyle(
+                          fontSize: 16 * widthRatio,
+                          color: const Color(0xFFFAFAFA),
+                        ),
                       ),
                       SizedBox(width: 8 * widthRatio),
-                      Text(category.displayName),
+                      Text(
+                        category.displayName,
+                        style: TextStyle(
+                          fontSize: 16 * widthRatio,
+                          color: const Color(0xFFFAFAFA),
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -212,244 +293,6 @@ class _AddCaseScreenState extends State<AddCaseScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  // Build title field
-  Widget _buildTitleField(double widthRatio) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '사건 제목',
-          style: TextStyle(
-            fontSize: 16 * widthRatio,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF121212),
-            fontFamily: 'Pretendard',
-          ),
-        ),
-        SizedBox(height: 8 * widthRatio),
-        TextFormField(
-          controller: _titleController,
-          maxLength: 100,
-          decoration: InputDecoration(
-            hintText: '예: "원격근무가 사무실 근무보다 생산적인가?"',
-            hintStyle: TextStyle(
-              fontSize: 16 * widthRatio,
-              color: const Color(0xFF8E8E8E),
-              fontFamily: 'Pretendard',
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * widthRatio),
-              borderSide: const BorderSide(
-                color: Color(0xFFE0E0E0),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * widthRatio),
-              borderSide: const BorderSide(
-                color: Color(0xFFE0E0E0),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * widthRatio),
-              borderSide: const BorderSide(
-                color: Color(0xFF5F37CF),
-                width: 2,
-              ),
-            ),
-            counterStyle: TextStyle(
-              fontSize: 12 * widthRatio,
-              color: const Color(0xFF8E8E8E),
-              fontFamily: 'Pretendard',
-            ),
-          ),
-          style: TextStyle(
-            fontSize: 16 * widthRatio,
-            color: const Color(0xFF121212),
-            fontFamily: 'Pretendard',
-          ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return '사건 제목을 입력해주세요';
-            }
-            if (value.trim().length < 10) {
-              return '제목은 최소 10자 이상이어야 합니다';
-            }
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  // Build description field
-  Widget _buildDescriptionField(double widthRatio) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '사건 설명',
-          style: TextStyle(
-            fontSize: 16 * widthRatio,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF121212),
-            fontFamily: 'Pretendard',
-          ),
-        ),
-        SizedBox(height: 8 * widthRatio),
-        TextFormField(
-          controller: _descriptionController,
-          maxLines: 6,
-          maxLength: 1000,
-          decoration: InputDecoration(
-            hintText: '배경 정보, 쟁점, 고려할 요소들을 상세히 설명해주세요...',
-            hintStyle: TextStyle(
-              fontSize: 16 * widthRatio,
-              color: const Color(0xFF8E8E8E),
-              fontFamily: 'Pretendard',
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * widthRatio),
-              borderSide: const BorderSide(
-                color: Color(0xFFE0E0E0),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * widthRatio),
-              borderSide: const BorderSide(
-                color: Color(0xFFE0E0E0),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * widthRatio),
-              borderSide: const BorderSide(
-                color: Color(0xFF5F37CF),
-                width: 2,
-              ),
-            ),
-            counterStyle: TextStyle(
-              fontSize: 12 * widthRatio,
-              color: const Color(0xFF8E8E8E),
-              fontFamily: 'Pretendard',
-            ),
-          ),
-          style: TextStyle(
-            fontSize: 16 * widthRatio,
-            color: const Color(0xFF121212),
-            fontFamily: 'Pretendard',
-          ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return '사건 설명을 입력해주세요';
-            }
-            if (value.trim().length < 20) {
-              return '설명은 최소 20자 이상이어야 합니다';
-            }
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  // Build voting info card
-  Widget _buildVotingInfoCard(double widthRatio) {
-    return Container(
-      padding: EdgeInsets.all(16 * widthRatio),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2196F3).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12 * widthRatio),
-        border: Border.all(
-          color: const Color(0xFF2196F3).withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.how_to_vote,
-                color: const Color(0xFF2196F3),
-                size: 20 * widthRatio,
-              ),
-              SizedBox(width: 8 * widthRatio),
-              Text(
-                '투표 시스템 안내',
-                style: TextStyle(
-                  fontSize: 14 * widthRatio,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF2196F3),
-                  fontFamily: 'Pretendard',
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * widthRatio),
-          Text(
-            '• 투표 기간: ${CourtSystemConfig.caseExpiryDays}일\n'
-            '• 승급 조건: ${CourtSystemConfig.minVotesForPromotion}표 이상 + ${CourtSystemConfig.controversyRatioMin.toInt()}-${CourtSystemConfig.controversyRatioMax.toInt()}% 비율\n'
-            '• 승급 시 법정 토론으로 진행 (${CourtSystemConfig.sessionDurationHours}시간)\n'
-            '• 일일 사건 제출 한도: ${CourtSystemConfig.maxCasesCreatedPerDay}개',
-            style: TextStyle(
-              fontSize: 12 * widthRatio,
-              color: const Color(0xFF2196F3),
-              fontFamily: 'Pretendard',
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Build submit button
-  Widget _buildSubmitButton(double widthRatio) {
-    return Padding(
-      padding: EdgeInsets.all(24 * widthRatio),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _isCreating ? null : _submitCase,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF5F37CF),
-            foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(vertical: 16 * widthRatio),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12 * widthRatio),
-            ),
-            elevation: 2,
-          ),
-          child: _isCreating
-              ? SizedBox(
-                  height: 20 * widthRatio,
-                  width: 20 * widthRatio,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  '사건 제출하기',
-                  style: TextStyle(
-                    fontSize: 16 * widthRatio,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Pretendard',
-                  ),
-                ),
-        ),
-      ),
     );
   }
 

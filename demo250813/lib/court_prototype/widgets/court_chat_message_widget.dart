@@ -24,6 +24,26 @@ class CourtChatMessageWidget extends StatelessWidget {
     final isCurrentUser = currentUser?.uid == message.senderId;
     final messageColor = Color(message.messageType.colorValue);
     
+    // Special handling for system messages (like silence messages)
+    if (message.isSystemMessage) {
+      return Container(
+        margin: EdgeInsets.symmetric(vertical: 8 * widthRatio),
+        child: Center(
+          child: Text(
+            message.message,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 12 * widthRatio,
+              fontWeight: FontWeight.w400,
+              fontFamily: 'Pretendard',
+              fontStyle: FontStyle.italic,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    
     // Align based on message type: guilty = left, not guilty = right
     final isGuiltyMessage = message.messageType == ChatMessageType.guilty;
 

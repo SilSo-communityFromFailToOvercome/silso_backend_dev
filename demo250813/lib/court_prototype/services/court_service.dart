@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/court_chat_message.dart';
-import '../add_court.dart';
+import '../models/court_session_model.dart';
 import '../config/court_config.dart';
 import 'case_service.dart';
 import '../models/case_model.dart';
@@ -319,6 +319,7 @@ class CourtService {
     required String courtId,
     required String message,
     required ChatMessageType messageType,
+    bool isSystemMessage = false,
   }) async {
     try {
       final user = _auth.currentUser;
@@ -348,6 +349,7 @@ class CourtService {
         'messageType': messageType.name,
         'timestamp': FieldValue.serverTimestamp(),
         'isDeleted': false,
+        'isSystemMessage': isSystemMessage,
         'createdAt': FieldValue.serverTimestamp(),
       };
 
@@ -374,6 +376,18 @@ class CourtService {
       messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
       return messages;
     });
+  }
+
+  // Update a chat message
+  Future<void> updateChatMessage(String messageId, String newMessage) async {
+    try {
+      await _courtChatsCollection.doc(messageId).update({
+        'message': newMessage.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Failed to update message: ${e.toString()}');
+    }
   }
 
   // Delete a chat message

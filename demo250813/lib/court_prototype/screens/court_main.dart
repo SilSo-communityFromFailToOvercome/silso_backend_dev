@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'views/chat_bubble_view.dart';
-import 'controllers/chat_controller.dart';
-import 'controllers/vote_controller.dart';
-import 'models/vote_model.dart';
-import 'widgets/keyboard_aware_scaffold.dart';
-import 'widgets/png_background.dart';
-import 'widgets/selective_transparent_design.dart';
-import 'widgets/court_chat_input.dart';
-import 'widgets/court_chat_message_widget.dart';
-import 'services/court_service.dart';
-import 'models/court_chat_message.dart';
-import 'add_court.dart';
+import 'dart:async';
+import '../views/chat_bubble_view.dart';
+import '../controllers/chat_controller.dart';
+import '../controllers/vote_controller.dart';
+import '../models/vote_model.dart';
+import '../widgets/keyboard_aware_scaffold.dart';
+import '../widgets/png_background.dart';
+import '../widgets/selective_transparent_design.dart';
+import '../widgets/court_chat_input.dart';
+import '../widgets/court_chat_message_widget.dart';
+import '../services/court_service.dart';
+import '../models/court_chat_message.dart';
+import '../models/court_session_model.dart';
+import '../config/court_config.dart';
 
 // Main screen of the Court app
 class CourtPrototypeScreen extends StatelessWidget {
@@ -62,8 +64,12 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
   int _messageCount = 0;
   bool _isSilenced = false;
   DateTime? _silenceTimestamp;
+  DateTime? _lastSilenceEndTime;
   bool _hasUserSentMessage = false;
   bool _hasScrolledToBottomOnFirstLoad = false;
+  Timer? _silenceTimer;
+  int _silenceCountdown = 0;
+  String? _silenceMessageId;
 
   @override
   void initState() {
@@ -80,6 +86,7 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
     }
   }
 
+
   void _handleSendMessage(ChatController controller) {
     if (_textController.text.isNotEmpty) {
       controller.addMessage(_textController.text, context);
@@ -88,8 +95,8 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
   }
 
   // Send court chat message
-  Future<void> _sendCourtChatMessage(String message, ChatMessageType messageType) async {
-    if (widget.courtSession == null) return;
+  Future<String?> _sendCourtChatMessage(String message, ChatMessageType messageType, {bool isSystemMessage = false}) async {
+    if (widget.courtSession == null) return null;
     
     // Mark that user has sent a message (excluding system messages)
     if (messageType != ChatMessageType.system && !_hasUserSentMessage) {
@@ -97,11 +104,13 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
     }
     
     try {
-      await _courtService.sendChatMessage(
+      final messageId = await _courtService.sendChatMessage(
         courtId: widget.courtSession!.id,
         message: message,
         messageType: messageType,
+        isSystemMessage: isSystemMessage,
       );
+      return messageId;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,6 +127,7 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
           ),
         );
       }
+      return null;
     }
   }
 
@@ -148,6 +158,7 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
 
   @override
   void dispose() {
+    _silenceTimer?.cancel();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -617,107 +628,55 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
     );
   }
 
-  // Show silence popup when 5 messages reached
-  void _showSilencePopup() async {
-    if (!mounted) return;
+  // Start silence with countdown
+  void _startSilence() async {
+    if (!mounted || widget.courtSession == null) return;
     
-    // Add silence marker to database
-    await _sendCourtChatMessage('정숙', ChatMessageType.system);
+    setState(() {
+      _isSilenced = true;
+      _silenceTimestamp = DateTime.now();
+      // Don't reset _messageCount - keep track of messages that triggered silence
+      _silenceCountdown = CourtSystemConfig.silenceDurationSeconds;
+    });
     
-    // Show popup dialog
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 300),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Gavel icon
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFDC2626),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.gavel,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Silence message
-              const Text(
-                '정숙!!',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFFDC2626),
-                  fontFamily: 'Pretendard',
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              const Text(
-                '5 messages reached.\nScreen cleared for order.\nScroll up to see previous messages.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF424242),
-                  fontFamily: 'Pretendard',
-                  height: 1.4,
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Close button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    // Set silence timestamp, reset counter, and prepare for scroll
-                    setState(() {
-                      _silenceTimestamp = DateTime.now();
-                      _messageCount = 0;
-                      _isSilenced = true;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC2626),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Pretendard',
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    // Add initial silence message to chat that will update
+    try {
+      _silenceMessageId = await _sendCourtChatMessage('This session was silenced for $_silenceCountdown seconds', ChatMessageType.system, isSystemMessage: true);
+    } catch (e) {
+      debugPrint('Failed to send silence message: $e');
+    }
+    
+    // Start countdown timer
+    _silenceTimer?.cancel();
+    _silenceTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      setState(() {
+        _silenceCountdown--;
+      });
+      
+      if (_silenceCountdown > 0) {
+        // Update existing silence message in chat with new countdown
+        if (_silenceMessageId != null) {
+          _courtService.updateChatMessage(_silenceMessageId!, 'This session was silenced for $_silenceCountdown seconds');
+        }
+      } else {
+        // End silence and update message to final state
+        timer.cancel();
+        if (_silenceMessageId != null) {
+          _courtService.updateChatMessage(_silenceMessageId!, 'This session was silenced.');
+        }
+        setState(() {
+          _isSilenced = false;
+          _lastSilenceEndTime = DateTime.now();
+          _silenceTimestamp = null;
+          _silenceMessageId = null;
+        });
+      }
+    });
   }
 
   @override
@@ -787,6 +746,60 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
                               : const SizedBox.shrink(),
                     ),
                     
+                    // Silence countdown overlay
+                    if (_isSilenced && _silenceCountdown > 0)
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          margin: const EdgeInsets.symmetric(horizontal: 40),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFF5F37CF),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.volume_off,
+                                color: const Color(0xFF5F37CF),
+                                size: 32,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '정숙',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  fontFamily: 'Pretendard',
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '$_silenceCountdown초',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF5F37CF),
+                                  fontFamily: 'Pretendard',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    
                     // Bottom input field - court chat or original
                     Positioned(
                       left: 0,
@@ -797,7 +810,7 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
                               child: CourtChatInput(
                                 controller: _textController,
                                 onSend: (message, messageType) => _sendCourtChatMessage(message, messageType),
-                                isEnabled: true,
+                                isEnabled: !_isSilenced,
                               ),
                             )
                           : KeyboardAwarePositioned(
@@ -883,18 +896,19 @@ class BubbleStackScreenState extends State<BubbleStackScreen> {
             _scrollToRecentMessages(messages);
           }
           
-          final nonSystemMessages = _isSilenced && _silenceTimestamp != null
-              ? messages.where((msg) => msg.messageType != ChatMessageType.system && msg.timestamp.isAfter(_silenceTimestamp!)).toList()
-              : messages.where((msg) => msg.messageType != ChatMessageType.system).toList();
+          final nonSystemMessages = messages.where((msg) => msg.messageType != ChatMessageType.system).toList();
           
-          final currentCount = nonSystemMessages.length;
+          // Count messages since last silence ended
+          final messagesSinceLastSilence = _lastSilenceEndTime != null
+              ? nonSystemMessages.where((msg) => msg.timestamp.isAfter(_lastSilenceEndTime!)).length
+              : nonSystemMessages.length;
           
-          // Trigger popup every 5 messages, but only if user has sent a message
-          if (currentCount >= 5 && (currentCount ~/ 5) > (_messageCount ~/ 5) && _hasUserSentMessage) {
-            _messageCount = currentCount;
-            _showSilencePopup();
+          // Trigger silence every 5 new messages since last silence, but only if user has sent a message
+          if (messagesSinceLastSilence >= 5 && _hasUserSentMessage && !_isSilenced) {
+            _messageCount = nonSystemMessages.length;
+            _startSilence();
           } else {
-            _messageCount = currentCount;
+            _messageCount = nonSystemMessages.length;
           }
         });
 
