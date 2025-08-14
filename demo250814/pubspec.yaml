@@ -99,6 +99,7 @@ flutter:
     - assets/images/google_signin/
     - assets/images/splash/
     - assets/images/community/
+    - assets/images/profile/
     # Court prototype assets
     - assets/animation_effect/
     - assets/background/

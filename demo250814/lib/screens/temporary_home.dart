@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'community/community_main.dart';
 import 'community/initial_profile/intro_community_splash2.dart';
+import 'contents_page/contents_main.dart';
+import 'admin_page/contents_admin.dart';
 import '../services/community_service.dart';
 import '../services/auth_service.dart';
 
@@ -159,6 +161,76 @@ class _TemporaryHomePageState extends State<TemporaryHomePage> {
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Pretendard',
                   ),
+                ),
+              ),
+              
+              SizedBox(height: 16 * heightRatio),
+              
+              // Contents button
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ContentsMainPage(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B46C1),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16 * heightRatio),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12 * widthRatio),
+                  ),
+                  elevation: 2,
+                ),
+                child: Text(
+                  '실소 콘텐츠',
+                  style: TextStyle(
+                    fontSize: 18 * widthRatio,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: 16 * heightRatio),
+              
+              // Admin button
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ContentsAdminPage(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7C3AED),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16 * heightRatio),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12 * widthRatio),
+                  ),
+                  elevation: 2,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.admin_panel_settings,
+                      size: 20 * widthRatio,
+                    ),
+                    SizedBox(width: 8 * widthRatio),
+                    Text(
+                      '콘텐츠 관리자',
+                      style: TextStyle(
+                        fontSize: 18 * widthRatio,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Pretendard',
+                      ),
+                    ),
+                  ],
                 ),
               ),
               
