@@ -9,7 +9,7 @@ class AppFonts {
   
   /// Primary font family for Korean and English text
   /// Uses Noto Sans KR which supports all Korean characters
-  static String get primaryFontFamily => GoogleFonts.notoSansKR().fontFamily!;
+  static String get primaryFontFamily => GoogleFonts.notoSansKr().fontFamily!;
   
   /// Alternative font family (Pretendard-like alternative)
   /// Uses Inter which is similar to Pretendard for Latin characters
@@ -23,7 +23,7 @@ class AppFonts {
     double? height,
     TextDecoration? decoration,
   }) {
-    return GoogleFonts.notoSansKR(
+    return GoogleFonts.notoSansKr(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,

@@ -4,6 +4,7 @@ import 'community/community_main.dart';
 import 'community/initial_profile/intro_community_splash2.dart';
 import 'contents_page/contents_main.dart';
 import 'admin_page/contents_admin.dart';
+import 'my_page/my_page_main.dart';
 import '../services/community_service.dart';
 import '../services/auth_service.dart';
 
@@ -224,6 +225,46 @@ class _TemporaryHomePageState extends State<TemporaryHomePage> {
                     SizedBox(width: 8 * widthRatio),
                     Text(
                       '콘텐츠 관리자',
+                      style: TextStyle(
+                        fontSize: 18 * widthRatio,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Pretendard',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              SizedBox(height: 16 * heightRatio),
+              
+              // My Page button
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MyPageMain(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B5CF6),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16 * heightRatio),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12 * widthRatio),
+                  ),
+                  elevation: 2,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.person,
+                      size: 20 * widthRatio,
+                    ),
+                    SizedBox(width: 8 * widthRatio),
+                    Text(
+                      '마이 페이지',
                       style: TextStyle(
                         fontSize: 18 * widthRatio,
                         fontWeight: FontWeight.w600,
