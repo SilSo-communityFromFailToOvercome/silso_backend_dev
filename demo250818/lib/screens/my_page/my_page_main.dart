@@ -861,7 +861,7 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
           height: 140 * heightRatio,
           child: Center(
             child: Image.asset(
-              'images/pets/pet5.png',
+              'assets/images/pets/pet5.png',
               width: 100 * widthRatio,
               height: 120 * heightRatio,
               fit: BoxFit.contain,
