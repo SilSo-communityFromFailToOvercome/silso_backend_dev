@@ -3,6 +3,7 @@ import '../../services/community_service.dart';
 import '../../models/post_model.dart';
 import '../../models/community_model.dart';
 import '../../widgets/cached_network_image_widget.dart';
+import '../../widgets/pet_profile_picture.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Post post;
@@ -207,21 +208,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             Row(
               children: [
                 // Author Avatar
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: const Color(0xFF5F37CF),
-                  child: Text(
-                    widget.post.anonymous 
-                        ? '익명' 
-                        : widget.post.userId.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      fontFamily: 'Pretendard',
-                    ),
-                  ),
-                ),
+                widget.post.anonymous
+                    ? CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xFF5F37CF),
+                        child: Text(
+                          '익명',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      )
+                    : PetProfilePicture(
+                        size: 40,
+                        userId: widget.post.userId,
+                      ),
                 
                 const SizedBox(width: 16),
                 
@@ -563,21 +567,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: const Color(0xFF121212),
-                child: Text(
-                  comment.anonymous 
-                      ? '익' 
-                      : comment.userId.substring(0, 1).toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontFamily: 'Pretendard',
-                  ),
-                ),
-              ),
+              comment.anonymous
+                  ? CircleAvatar(
+                      radius: 14,
+                      backgroundColor: const Color(0xFF121212),
+                      child: Text(
+                        '익',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                    )
+                  : PetProfilePicture(
+                      size: 28,
+                      userId: comment.userId,
+                    ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

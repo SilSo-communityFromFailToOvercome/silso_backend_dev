@@ -7,7 +7,8 @@ import '../../models/community_model.dart';
 import '../community/post_detail_screen.dart';
 import '../community/community_detail_page.dart';
 import '../../widgets/custom_bottom_navigation.dart';
-import 'settings.dart';
+import '../../widgets/pet_profile_picture.dart';
+import 'settings/settings.dart';
 import 'choose_pet.dart';
 
 class MyPageMain extends StatefulWidget {
@@ -34,6 +35,10 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
   
   // Pet selection state
   String _selectedPetId = 'pet5'; // Default pet
+  
+  // Streak state
+  int _currentStreak = 0;
+  bool _isLoadingStreak = true;
 
   @override
   void initState() {
@@ -54,6 +59,7 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
       _loadUserComments(),
       _loadUserCommunities(),
       _loadUserPetSelection(),
+      _loadUserStreak(),
     ]);
   }
 
@@ -74,6 +80,93 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
       }
     } catch (e) {
       debugPrint('Error loading pet selection: $e');
+    }
+  }
+
+  Future<void> _loadUserStreak() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Update user's last visit date
+        await _updateLastVisit(user.uid);
+        
+        // Calculate current streak
+        final streak = await _calculateStreak(user.uid);
+        setState(() {
+          _currentStreak = streak;
+          _isLoadingStreak = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingStreak = false;
+      });
+      debugPrint('Error loading user streak: $e');
+    }
+  }
+
+  Future<void> _updateLastVisit(String userId) async {
+    try {
+      final today = DateTime.now();
+      final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({
+        'lastVisitDate': todayString,
+        'lastVisitTimestamp': Timestamp.fromDate(today),
+      });
+    } catch (e) {
+      debugPrint('Error updating last visit: $e');
+    }
+  }
+
+  Future<int> _calculateStreak(String userId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (!doc.exists) return 1; // First visit
+      
+      final data = doc.data()!;
+      final lastVisitDate = data['lastVisitDate'] as String?;
+      final currentStreak = data['currentStreak'] as int? ?? 0;
+      
+      if (lastVisitDate == null) return 1; // First visit
+      
+      final today = DateTime.now();
+      final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      
+      if (lastVisitDate == todayString) {
+        // Same day visit
+        return currentStreak > 0 ? currentStreak : 1;
+      }
+      
+      final yesterday = today.subtract(const Duration(days: 1));
+      final yesterdayString = '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
+      
+      int newStreak;
+      if (lastVisitDate == yesterdayString) {
+        // Consecutive day visit
+        newStreak = currentStreak + 1;
+      } else {
+        // Streak broken, start new
+        newStreak = 1;
+      }
+      
+      // Update the streak in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({'currentStreak': newStreak});
+      
+      return newStreak;
+    } catch (e) {
+      debugPrint('Error calculating streak: $e');
+      return 1;
     }
   }
 
@@ -394,9 +487,9 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
                 fontFamily: 'Pretendard',
               ),
               tabs: const [
-                Tab(text: 'Posts'),
-                Tab(text: 'Comments'),
-                Tab(text: 'Communities'),
+                Tab(text: '게시글'),
+                Tab(text: '댓글'),
+                Tab(text: '커뮤니티'),
               ],
             ),
           ),
@@ -777,18 +870,9 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
             Row(
               children: [
                 // Profile picture
-                Container(
-                  width: 40 * widthRatio,
-                  height: 40 * widthRatio,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFBBBBBB),
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 20 * widthRatio,
-                  ),
+                StaticPetProfilePicture(
+                  size: 40 * widthRatio,
+                  petId: _selectedPetId,
                 ),
                 
                 SizedBox(width: 12 * widthRatio),
@@ -890,6 +974,7 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
       return 0;
     }
   }
+
 
   // Format time as "1일전" style
   String _formatTimeAgo(DateTime date) {
@@ -1207,6 +1292,54 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
   }
 
 
+  Widget _buildStreakIndicator(double widthRatio, double heightRatio) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 20 * widthRatio,
+        vertical: 8 * heightRatio,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF5F37CF),
+        borderRadius: BorderRadius.circular(20 * widthRatio),
+      ),
+      child: _isLoadingStreak
+          ? SizedBox(
+              width: 100 * widthRatio,
+              height: 20 * heightRatio,
+              child: Center(
+                child: SizedBox(
+                  width: 12 * widthRatio,
+                  height: 12 * widthRatio,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ),
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Fire emoji icon
+                Text(
+                  '🔥',
+                  style: TextStyle(fontSize: 16 * widthRatio),
+                ),
+                SizedBox(width: 6 * widthRatio),
+                Text(
+                  '$_currentStreak일째 방문중',
+                  style: TextStyle(
+                    fontSize: 14 * widthRatio,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
   Widget _buildVirtualPetSection(double widthRatio, double heightRatio) {
     return Column(
       children: [
@@ -1261,6 +1394,11 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
             ),
           ),
         ),
+        
+        SizedBox(height: 16 * heightRatio),
+        
+        // Streak Indicator
+        _buildStreakIndicator(widthRatio, heightRatio),
       ],
     );
   }
