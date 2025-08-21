@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../services/community_service.dart';
+import '../../services/blocking_integration_service.dart';
 import '../../models/post_model.dart';
 import '../../models/community_model.dart';
 import '../../widgets/cached_network_image_widget.dart';
 import '../../widgets/pet_profile_picture.dart';
+import '../../widgets/blocking_utils.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Post post;
@@ -21,6 +23,7 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final CommunityService _communityService = CommunityService();
+  final BlockingIntegrationService _blockingService = BlockingIntegrationService();
   final TextEditingController _commentController = TextEditingController();
   List<PostComment> _comments = [];
   bool _isLoading = true;
@@ -47,7 +50,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _loadComments() async {
     try {
-      final comments = await _communityService.getPostComments(widget.post.postId);
+      final comments = await _blockingService.getFilteredPostComments(widget.post.postId);
       if (mounted) {
         setState(() {
           _comments = comments;
@@ -159,9 +162,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          IconButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Color(0xFF121212)),
-            onPressed: () {},
+            onSelected: (value) async {
+              await BlockingUtils.handleMenuSelection(
+                context: context,
+                selectedValue: value,
+                userId: widget.post.userId,
+                username: widget.post.anonymous ? '익명' : 'User ${widget.post.userId}',
+                onBlocked: () {
+                  // Refresh the screen or navigate back
+                  Navigator.of(context).pop();
+                },
+              );
+            },
+            itemBuilder: (context) => [
+              BlockingUtils.createBlockMenuItem(),
+            ],
           ),
         ],
       ),
@@ -628,6 +645,30 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ],
                 ),
               ),
+              // Add block menu for non-anonymous comments
+              if (!comment.anonymous)
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert,
+                    size: 16,
+                    color: Color(0xFF8E8E8E),
+                  ),
+                  onSelected: (value) async {
+                    await BlockingUtils.handleMenuSelection(
+                      context: context,
+                      selectedValue: value,
+                      userId: comment.userId,
+                      username: '사용자${comment.userId.substring(0, 4)}',
+                      onBlocked: () {
+                        // Refresh comments
+                        _loadComments();
+                      },
+                    );
+                  },
+                  itemBuilder: (context) => [
+                    BlockingUtils.createBlockMenuItem(),
+                  ],
+                ),
             ],
           ),
         ],

@@ -3,9 +3,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../services/community_service.dart';
 import '../../services/search_analytics_service.dart';
+import '../../services/blocking_integration_service.dart';
 import '../../models/community_model.dart';
 import '../../models/search_analytics_model.dart';
 import 'community_detail_page.dart';
+import '../../widgets/blocking_utils.dart';
 
 class ExploreSearchPage extends StatefulWidget {
   const ExploreSearchPage({super.key});
@@ -17,6 +19,7 @@ class ExploreSearchPage extends StatefulWidget {
 class _ExploreSearchPageState extends State<ExploreSearchPage> {
   final CommunityService _communityService = CommunityService();
   final SearchAnalyticsService _searchAnalyticsService = SearchAnalyticsService();
+  final BlockingIntegrationService _blockingService = BlockingIntegrationService();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   
@@ -107,7 +110,7 @@ class _ExploreSearchPageState extends State<ExploreSearchPage> {
 
   Future<void> _loadCommunities() async {
     try {
-      final communities = await _communityService.getAllCommunities();
+      final communities = await _blockingService.getFilteredCommunities();
       setState(() {
         _allCommunities = communities;
       });
@@ -442,6 +445,29 @@ class _ExploreSearchPageState extends State<ExploreSearchPage> {
                       ),
                     ],
                   ),
+                ),
+                // Add block button for community creator
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert,
+                    size: 20,
+                    color: Color(0xFF8E8E8E),
+                  ),
+                  onSelected: (value) async {
+                    await BlockingUtils.handleMenuSelection(
+                      context: context,
+                      selectedValue: value,
+                      userId: community.creatorId,
+                      username: '커뮤니티 작성자',
+                      onBlocked: () {
+                        // Refresh search results
+                        _performSearch(_currentQuery);
+                      },
+                    );
+                  },
+                  itemBuilder: (context) => [
+                    BlockingUtils.createBlockMenuItem(),
+                  ],
                 ),
               ],
             ),

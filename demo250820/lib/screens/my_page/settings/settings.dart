@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../services/auth_service.dart';
+import 'change_pw.dart';
+import 'blocked_users.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -256,6 +258,18 @@ class _SettingsPageState extends State<SettingsPage> {
           _signOut();
         } else if (title == '앱 버전') {
           _showAppVersionDialog();
+        } else if (title == '비밀번호 변경') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ChangePasswordPage(),
+            ),
+          );
+        } else if (title == '차단된 계정') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const BlockedUsersPage(),
+            ),
+          );
         } else {
           // TODO: Add navigation functionality for other menu items
         }

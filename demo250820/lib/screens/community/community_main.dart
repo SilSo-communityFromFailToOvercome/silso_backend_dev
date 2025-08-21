@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/community_service.dart'; // hot posts, general posts, my posts
 import '../../services/auth_service.dart'; // auth service for sign out
+import '../../services/blocking_integration_service.dart'; // blocking integration
 import 'post_detail_screen.dart';
 import '../../models/post_model.dart';
 import '../../models/community_model.dart';
@@ -27,6 +28,7 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
   final CommunityService _communityService = CommunityService();
   final AuthService _authService = AuthService();
   final CourtService _courtService = CourtService();
+  final BlockingIntegrationService _blockingService = BlockingIntegrationService();
   
   // Court 관련 변수들
   late PageController _pageController;
@@ -67,14 +69,14 @@ class _CommunityMainTabScreenMycomState extends State<CommunityMainTabScreenMyco
     _pageController = PageController();
     _liveSessionsStream = _courtService.getLiveCourtSessions();
     
-    // 위젯이 처음 생성될 때 HOT 게시물 데이터를 불러옵니다.
-    _hotPostsFuture = _communityService.getHotPosts();
-    // 종합 게시판 게시물 데이터를 불러옵니다.
-    _generalPostsFuture = _communityService.getCommunityPosts('r8zn6yjJtKHP3jyDoJ2x');
+    // 위젯이 처음 생성될 때 HOT 게시물 데이터를 불러옵니다. (차단된 사용자 제외)
+    _hotPostsFuture = _blockingService.getFilteredHotPosts();
+    // 종합 게시판 게시물 데이터를 불러옵니다. (차단된 사용자 제외)
+    _generalPostsFuture = _blockingService.getFilteredGeneralPosts();
     _myPostsFuture = _communityService.getLatestPostsFromMyCommunities(); // 새로 만든 함수 호출
     _myCommunitiesStream = _communityService.getMyCommunitiesStream(); // '내 커뮤니티'를 위한 Stream
     _top5CommunitiesFuture = _communityService.getTop5Communities();
-    _recommendedCommunitiesStream = _communityService.getRecommendedCommunitiesStream(); // 추천 커뮤니티 스트림
+    _recommendedCommunitiesStream = _blockingService.getFilteredRecommendedCommunitiesStream(); // 추천 커뮤니티 스트림 (차단된 사용자 제외)
     _userInterestsFuture = _communityService.getUserInterests(); // 사용자 관심사 로드
 
   }
