@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../services/auth_service.dart';
 import 'change_pw.dart';
 import 'blocked_users.dart';
+import 'usage_limit_history.dart';
+import 'faq.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -268,6 +270,18 @@ class _SettingsPageState extends State<SettingsPage> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const BlockedUsersPage(),
+            ),
+          );
+        } else if (title == '이용 제한 내역') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const UsageLimitHistoryPage(),
+            ),
+          );
+        } else if (title == '문의하기') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const FAQPage(),
             ),
           );
         } else {

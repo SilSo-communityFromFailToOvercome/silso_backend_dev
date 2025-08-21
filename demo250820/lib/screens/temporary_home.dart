@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'community/community_main.dart';
 import 'community/initial_profile/intro_community_splash2.dart';
 import 'contents_page/contents_main.dart';
-import 'admin_page/contents_admin.dart';
+import 'admin_page/admin_menu.dart';
 import 'my_page/my_page_main.dart';
 import '../services/community_service.dart';
 import '../services/auth_service.dart';
@@ -202,7 +202,7 @@ class _TemporaryHomePageState extends State<TemporaryHomePage> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const ContentsAdminPage(),
+                      builder: (context) => const AdminMenuPage(),
                     ),
                   );
                 },
@@ -224,7 +224,7 @@ class _TemporaryHomePageState extends State<TemporaryHomePage> {
                     ),
                     SizedBox(width: 8 * widthRatio),
                     Text(
-                      '콘텐츠 관리자',
+                      'Admin',
                       style: TextStyle(
                         fontSize: 18 * widthRatio,
                         fontWeight: FontWeight.w600,
