@@ -8,6 +8,8 @@ class Post {
   final String communityId;
   final int commentCount;
   final int viewCount; // Number of views
+  final int likeCount; // Number of likes
+  final List<String> likedBy; // List of user IDs who liked this post
   final String title;
   final String caption;
   final bool anonymous; // Whether post is anonymous
@@ -23,6 +25,8 @@ class Post {
     required this.communityId,
     required this.commentCount,
     required this.viewCount,
+    required this.likeCount,
+    required this.likedBy,
     required this.title,
     required this.caption,
     required this.anonymous,
@@ -41,6 +45,8 @@ class Post {
       'communityId': communityId,
       'commentCount': commentCount,
       'viewCount': viewCount,
+      'likeCount': likeCount,
+      'likedBy': likedBy,
       'title': title,
       'caption': caption,
       'anonymous': anonymous,
@@ -60,6 +66,8 @@ class Post {
       communityId: map['communityId'] ?? '',
       commentCount: map['commentCount'] ?? 0,
       viewCount: map['viewCount'] ?? 0,
+      likeCount: map['likeCount'] ?? 0,
+      likedBy: List<String>.from(map['likedBy'] ?? []),
       title: map['title'] ?? '',
       caption: map['caption'] ?? '',
       anonymous: map['anonymous'] ?? false,
@@ -78,6 +86,8 @@ class Post {
     String? communityId,
     int? commentCount,
     int? viewCount,
+    int? likeCount,
+    List<String>? likedBy,
     String? title,
     String? caption,
     bool? anonymous,
@@ -93,6 +103,8 @@ class Post {
       communityId: communityId ?? this.communityId,
       commentCount: commentCount ?? this.commentCount,
       viewCount: viewCount ?? this.viewCount,
+      likeCount: likeCount ?? this.likeCount,
+      likedBy: likedBy ?? this.likedBy,
       title: title ?? this.title,
       caption: caption ?? this.caption,
       anonymous: anonymous ?? this.anonymous,
@@ -149,6 +161,8 @@ class CreatePostRequest {
       'postType': postType.toString().split('.').last,
       'commentCount': 0, // New posts start with 0 comments
       'viewCount': 0, // New posts start with 0 views
+      'likeCount': 0, // New posts start with 0 likes
+      'likedBy': [], // New posts start with no likes
       'datePosted': Timestamp.fromDate(now),
       'createdAt': Timestamp.fromDate(now),
       'updatedAt': Timestamp.fromDate(now),

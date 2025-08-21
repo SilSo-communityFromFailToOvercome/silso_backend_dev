@@ -6,6 +6,7 @@ import '../../services/search_analytics_service.dart';
 import '../../services/blocking_integration_service.dart';
 import '../../models/community_model.dart';
 import '../../models/search_analytics_model.dart';
+import '../../models/report.dart';
 import 'community_detail_page.dart';
 import '../../widgets/blocking_utils.dart';
 
@@ -459,6 +460,8 @@ class _ExploreSearchPageState extends State<ExploreSearchPage> {
                       selectedValue: value,
                       userId: community.creatorId,
                       username: '커뮤니티 작성자',
+                      userEmail: '커뮤니티 작성자',
+                      contentType: ReportedContentType.user,
                       onBlocked: () {
                         // Refresh search results
                         _performSearch(_currentQuery);
@@ -466,6 +469,7 @@ class _ExploreSearchPageState extends State<ExploreSearchPage> {
                     );
                   },
                   itemBuilder: (context) => [
+                    BlockingUtils.createReportMenuItem(),
                     BlockingUtils.createBlockMenuItem(),
                   ],
                 ),

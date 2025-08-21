@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/blocking_integration_service.dart';
 import '../services/user_service.dart';
+import '../models/report.dart';
+import 'report_dialog.dart';
 
 /// Utility class for adding blocking functionality to existing widgets
 class BlockingUtils {
@@ -180,6 +182,28 @@ class BlockingUtils {
     }
   }
 
+  /// Create a report menu option for PopupMenuButton
+  static PopupMenuItem<String> createReportMenuItem() {
+    return const PopupMenuItem<String>(
+      value: 'report',
+      child: Row(
+        children: [
+          Icon(Icons.flag_outlined, color: Color(0xFFDC2626), size: 18),
+          SizedBox(width: 8),
+          Text(
+            '신고하기',
+            style: TextStyle(
+              color: Color(0xFFDC2626),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Pretendard',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Create a block menu option for PopupMenuButton
   static PopupMenuItem<String> createBlockMenuItem() {
     return const PopupMenuItem<String>(
@@ -202,21 +226,37 @@ class BlockingUtils {
     );
   }
 
-  /// Handle menu selection for block action
+  /// Handle menu selection for report and block actions
   static Future<void> handleMenuSelection({
     required BuildContext context,
     required String selectedValue,
     required String userId,
     required String username,
+    String? userEmail,
+    ReportedContentType contentType = ReportedContentType.user,
+    String? contentId,
+    String? contentText,
     VoidCallback? onBlocked,
   }) async {
-    if (selectedValue == 'block') {
-      await showBlockUserDialog(
-        context: context,
-        userIdToBlock: userId,
-        username: username,
-        onBlocked: onBlocked,
-      );
+    switch (selectedValue) {
+      case 'report':
+        ReportDialog.show(
+          context: context,
+          reportedUserId: userId,
+          reportedUserEmail: userEmail ?? username,
+          contentType: contentType,
+          contentId: contentId,
+          contentText: contentText,
+        );
+        break;
+      case 'block':
+        await showBlockUserDialog(
+          context: context,
+          userIdToBlock: userId,
+          username: username,
+          onBlocked: onBlocked,
+        );
+        break;
     }
   }
 

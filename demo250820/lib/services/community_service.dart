@@ -913,6 +913,135 @@ class CommunityService {
     }
   }
 
+  // Toggle like status for a post
+  Future<void> togglePostLike(String postId) async {
+    if (currentUserId == null) return;
+
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final postRef = _firestore.collection('posts').doc(postId);
+        final postSnapshot = await transaction.get(postRef);
+        
+        if (!postSnapshot.exists) return;
+        
+        final data = postSnapshot.data()!;
+        
+        // Check if this is a legacy post and migrate it first
+        if (!data.containsKey('likedBy') || !data.containsKey('likeCount')) {
+          transaction.update(postRef, {
+            'likeCount': 0,
+            'likedBy': [],
+          });
+        }
+        
+        final likedBy = List<String>.from(data['likedBy'] ?? []);
+        
+        if (likedBy.contains(currentUserId)) {
+          // Unlike the post
+          likedBy.remove(currentUserId);
+        } else {
+          // Like the post
+          likedBy.add(currentUserId!);
+        }
+        
+        transaction.update(postRef, {
+          'likedBy': likedBy,
+          'likeCount': likedBy.length,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      debugPrint('Error toggling post like: $e');
+      rethrow;
+    }
+  }
+
+  // Check if current user has liked a post
+  Future<bool> isPostLikedByUser(String postId) async {
+    if (currentUserId == null) return false;
+
+    try {
+      final doc = await _firestore
+          .collection('posts')
+          .doc(postId)
+          .get();
+      
+      if (!doc.exists) return false;
+      
+      // Migrate legacy posts if they don't have like fields
+      final data = doc.data()!;
+      if (!data.containsKey('likedBy') || !data.containsKey('likeCount')) {
+        await _migrateLegacyPost(postId, data);
+        // Fetch the updated document
+        final updatedDoc = await _firestore
+            .collection('posts')
+            .doc(postId)
+            .get();
+        if (!updatedDoc.exists) return false;
+        final likedBy = List<String>.from(updatedDoc.data()?['likedBy'] ?? []);
+        return likedBy.contains(currentUserId);
+      }
+      
+      final likedBy = List<String>.from(data['likedBy'] ?? []);
+      return likedBy.contains(currentUserId);
+    } catch (e) {
+      debugPrint('Error checking post like status: $e');
+      return false;
+    }
+  }
+
+  // Migrate legacy posts to include like fields
+  Future<void> _migrateLegacyPost(String postId, Map<String, dynamic> data) async {
+    try {
+      await _firestore
+          .collection('posts')
+          .doc(postId)
+          .update({
+        'likeCount': 0,
+        'likedBy': [],
+      });
+      debugPrint('Migrated legacy post: $postId');
+    } catch (e) {
+      debugPrint('Error migrating legacy post $postId: $e');
+    }
+  }
+
+  // Bulk migrate all posts to include like fields (for database migration)
+  Future<void> migrateAllPostsToIncludeLikes() async {
+    try {
+      debugPrint('Starting bulk migration of posts...');
+      
+      final querySnapshot = await _firestore
+          .collection('posts')
+          .get();
+      
+      int migratedCount = 0;
+      int totalCount = querySnapshot.docs.length;
+      
+      for (final doc in querySnapshot.docs) {
+        final data = doc.data();
+        
+        // Check if migration is needed
+        if (!data.containsKey('likedBy') || !data.containsKey('likeCount')) {
+          await _firestore
+              .collection('posts')
+              .doc(doc.id)
+              .update({
+            'likeCount': 0,
+            'likedBy': [],
+          });
+          migratedCount++;
+          debugPrint('Migrated post ${doc.id} ($migratedCount/$totalCount)');
+        }
+      }
+      
+      debugPrint('Migration completed: $migratedCount out of $totalCount posts migrated');
+    } catch (e) {
+      debugPrint('Error during bulk migration: $e');
+      rethrow;
+    }
+  }
+
   // RECOMMENDATION METHODS
 
   // Get user interests for recommendations

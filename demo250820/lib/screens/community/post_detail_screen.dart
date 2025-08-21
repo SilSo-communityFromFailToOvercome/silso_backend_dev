@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/community_service.dart';
 import '../../services/blocking_integration_service.dart';
 import '../../models/post_model.dart';
 import '../../models/community_model.dart';
+import '../../models/report.dart';
 import '../../widgets/cached_network_image_widget.dart';
 import '../../widgets/pet_profile_picture.dart';
 import '../../widgets/blocking_utils.dart';
+import '../my_page/user_page.dart';
+import '../my_page/my_page_main.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Post post;
@@ -32,6 +36,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   CommentType _selectedCommentType = CommentType.advice;
   bool _isAnonymousComment = false;
   String _selectedCommentTab = 'advice'; // 'advice' or 'empathy'
+  
+  // Like functionality state
+  bool _isLiked = false;
+  int _likeCount = 0;
+  bool _isLikingInProgress = false;
 
   @override
   void initState() {
@@ -40,6 +49,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     _loadComments();
     _checkMembership();
     _incrementViewCount();
+    _initializeLikeState();
   }
 
   @override
@@ -141,6 +151,113 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  Future<void> _navigateToUserPage(String userId, {String? username}) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+      
+      if (mounted) {
+        // If user is trying to view their own profile, navigate to MyPage instead
+        if (currentUser.uid == userId) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const MyPageMain(),
+            ),
+          );
+        } else {
+          // Navigate to other user's profile
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => UserPage(
+                userId: userId,
+                username: username,
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('사용자 페이지를 불러올 수 없습니다: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _initializeLikeState() async {
+    try {
+      // This will automatically migrate the post if needed
+      final isLiked = await _communityService.isPostLikedByUser(widget.post.postId);
+      
+      // Get fresh post data to ensure we have the latest like count
+      final freshPost = await _communityService.getPost(widget.post.postId);
+      
+      if (mounted) {
+        setState(() {
+          _isLiked = isLiked;
+          _likeCount = freshPost.likeCount;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error initializing like state: $e');
+      // Fallback to widget post data if there's an error
+      if (mounted) {
+        setState(() {
+          _isLiked = false;
+          _likeCount = widget.post.likeCount;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    if (_isLikingInProgress) return;
+
+    setState(() => _isLikingInProgress = true);
+
+    try {
+      await _communityService.togglePostLike(widget.post.postId);
+      
+      // Refresh the like state from the database to ensure consistency
+      await _refreshLikeState();
+      
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('좋아요 처리 중 오류가 발생했습니다: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLikingInProgress = false);
+      }
+    }
+  }
+
+  Future<void> _refreshLikeState() async {
+    try {
+      // Get fresh post data from the database
+      final updatedPost = await _communityService.getPost(widget.post.postId);
+      final isLiked = await _communityService.isPostLikedByUser(widget.post.postId);
+      
+      if (mounted) {
+        setState(() {
+          _isLiked = isLiked;
+          _likeCount = updatedPost.likeCount;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error refreshing like state: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,6 +287,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 selectedValue: value,
                 userId: widget.post.userId,
                 username: widget.post.anonymous ? '익명' : 'User ${widget.post.userId}',
+                contentType: ReportedContentType.post,
+                contentId: widget.post.postId,
+                contentText: widget.post.caption.length > 100 
+                    ? widget.post.caption.substring(0, 100)
+                    : widget.post.caption,
                 onBlocked: () {
                   // Refresh the screen or navigate back
                   Navigator.of(context).pop();
@@ -177,6 +299,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               );
             },
             itemBuilder: (context) => [
+              BlockingUtils.createReportMenuItem(),
               BlockingUtils.createBlockMenuItem(),
             ],
           ),
@@ -251,15 +374,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.post.anonymous 
-                            ? '익명' 
-                            : '사용자${widget.post.userId.substring(0, 4)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF121212),
-                          fontFamily: 'Pretendard',
+                      GestureDetector(
+                        onTap: widget.post.anonymous ? null : () {
+                          _navigateToUserPage(
+                            widget.post.userId,
+                            username: '사용자${widget.post.userId.substring(0, 4)}',
+                          );
+                        },
+                        child: Text(
+                          widget.post.anonymous 
+                              ? '익명' 
+                              : '사용자${widget.post.userId.substring(0, 4)}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: widget.post.anonymous 
+                                ? const Color(0xFF121212)
+                                : const Color(0xFF5F37CF),
+                            fontFamily: 'Pretendard',
+                          ),
                         ),
                       ),
                       Row(
@@ -412,17 +545,52 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Total Comments Header
+        // Total Comments Header with Like Button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Text(
-            '댓글 ${_comments.length}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF121212),
-              fontFamily: 'Pretendard',
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Comments count on the left
+              Text(
+                '댓글 ${_comments.length}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF121212),
+                  fontFamily: 'Pretendard',
+                ),
+              ),
+              // Like button on the right
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: _isLikingInProgress ? null : _toggleLike,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: _isLiked ? Colors.red : const Color(0xFF8E8E8E),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$_likeCount',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: _isLiked ? Colors.red : const Color(0xFF8E8E8E),
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         
@@ -609,15 +777,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          comment.anonymous 
-                              ? '익명' 
-                              : '사용자${comment.userId.substring(0, 4)}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF121212),
-                            fontFamily: 'Pretendard',
+                        GestureDetector(
+                          onTap: comment.anonymous ? null : () {
+                            _navigateToUserPage(
+                              comment.userId,
+                              username: '사용자${comment.userId.substring(0, 4)}',
+                            );
+                          },
+                          child: Text(
+                            comment.anonymous 
+                                ? '익명' 
+                                : '사용자${comment.userId.substring(0, 4)}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: comment.anonymous 
+                                  ? const Color(0xFF121212)
+                                  : const Color(0xFF5F37CF),
+                              fontFamily: 'Pretendard',
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -659,6 +837,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       selectedValue: value,
                       userId: comment.userId,
                       username: '사용자${comment.userId.substring(0, 4)}',
+                      contentType: ReportedContentType.comment,
+                      contentId: comment.commentId,
+                      contentText: comment.content,
                       onBlocked: () {
                         // Refresh comments
                         _loadComments();
@@ -666,6 +847,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     );
                   },
                   itemBuilder: (context) => [
+                    BlockingUtils.createReportMenuItem(),
                     BlockingUtils.createBlockMenuItem(),
                   ],
                 ),
