@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:js_interop' as js;
 import 'dart:js_interop_unsafe';
+import '../config/kakao_config.dart';
 
 class KoreanAuthService {
   static final KoreanAuthService _instance = KoreanAuthService._internal();
@@ -386,6 +387,10 @@ class KoreanAuthService {
       // Create a completer to handle the async JavaScript callback
       final completer = Completer<String?>();
       
+      // Build OAuth URL with proper client ID from config
+      final currentOrigin = (js.globalContext.getProperty('location'.toJS) as js.JSObject).getProperty('origin'.toJS).dartify() as String;
+      final oauthUrl = KakaoConfig.buildOAuthUrl(currentOrigin);
+      
       // Define global callback functions (web only)
       js.globalContext.setProperty('flutterKakaoSuccess'.toJS, (js.JSAny authObj) {
         try {
@@ -469,14 +474,9 @@ class KoreanAuthService {
               scope: 'profile_nickname,profile_image'
             });
           } else {
-            // Fallback: try direct OAuth redirect
+            // Fallback: try direct OAuth redirect using proper client ID
             console.log('Using direct OAuth redirect');
-            var authUrl = 'https://kauth.kakao.com/oauth/authorize' +
-              '?client_id=3d1ed1dc6cd2c4797f2dfd65ee48c8e8' +
-              '&redirect_uri=' + encodeURIComponent(window.location.origin) +
-              '&response_type=code' +
-              '&scope=profile_nickname,profile_image,account_email';
-            window.location.href = authUrl;
+            window.location.href = '$oauthUrl';
           }
         } catch (e) {
           console.error('JavaScript error in Kakao login:', e);

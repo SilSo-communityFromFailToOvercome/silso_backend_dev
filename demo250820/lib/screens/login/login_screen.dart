@@ -241,40 +241,7 @@ fit: BoxFit.contain, // 또는 BoxFit.fill 등 필요에 따라 조절
                     ),
                   ),
                 ),
-                // Apple 로그인 버튼 (더미)
-                _buildAppleButton(widthRatio),
               ],
-            ),
-          ),
-        ),
-        
-        // 전화번호로 계속하기 버튼
-        Positioned(
-          left: 17 * widthRatio,
-          top: 590 * heightRatio,
-          child: Container(
-            width: 360 * widthRatio,
-            height: 52 * heightRatio,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : () {}, // 전화번호 로그인 로직으로 연결 필요
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5F37CF),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12 * widthRatio),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 14 * heightRatio),
-              ),
-              child: Text(
-                '전화번호로 계속하기',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18 * widthRatio,
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w600,
-                  height: 1.23,
-                ),
-              ),
             ),
           ),
         ),
@@ -282,7 +249,7 @@ fit: BoxFit.contain, // 또는 BoxFit.fill 등 필요에 따라 조절
         // 비회원으로 구경하기 버튼
         Positioned(
           left: 136 * widthRatio,
-          top: 672 * heightRatio,
+          top: 520 * heightRatio,
           child: GestureDetector(
             onTap: _isLoading ? null : _signInAnonymously,
             child: Column(
@@ -313,34 +280,6 @@ fit: BoxFit.contain, // 또는 BoxFit.fill 등 필요에 따라 조절
 }
 
 
-// 애플 로그인 버튼을 위한 더미 위젯
-Widget _buildAppleButton(double widthRatio) {
-  return Container(
-    width: double.infinity,
-    height: 52 * widthRatio,
-    child: ElevatedButton(
-      onPressed: () {}, // 애플 로그인 로직으로 연결 필요
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF121212),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12 * widthRatio),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 14 * widthRatio),
-      ),
-      child: Text(
-        'Apple로 계속하기',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 18 * widthRatio,
-          fontFamily: 'Pretendard',
-          fontWeight: FontWeight.w600,
-          height: 1.23,
-        ),
-      ),
-    ),
-  );
-}
 
   Future<void> _handleKakaoSignInWithImage() async {
     setState(() => _isLoading = true);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'services/korean_auth_service.dart';
+import 'config/kakao_config.dart';
 import 'screens/splash_screen.dart';
 // Community UI imports
 import 'screens/login/login_screen.dart';
@@ -27,8 +28,8 @@ void main() async {
   
   // Initialize Kakao SDK with correct keys for each platform
   await KoreanAuthService.initialize(
-    kakaoAppKey: '3d1ed1dc6cd2c4797f2dfd65ee48c8e8', // JavaScript key for web
-    nativeAppKey: '3c7a8b482a7de8109be0c367da2eb33a', // Native app key for mobile
+    kakaoAppKey: KakaoConfig.javascriptKey, // JavaScript key for web
+    nativeAppKey: KakaoConfig.nativeAppKey, // Native app key for mobile
   );
   
   runApp(const MyApp());

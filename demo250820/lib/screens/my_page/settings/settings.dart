@@ -4,6 +4,7 @@ import 'change_pw.dart';
 import 'blocked_users.dart';
 import 'usage_limit_history.dart';
 import 'faq.dart';
+import 'announcements.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -282,6 +283,12 @@ class _SettingsPageState extends State<SettingsPage> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const FAQPage(),
+            ),
+          );
+        } else if (title == '공지사항') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const AnnouncementsPage(),
             ),
           );
         } else {

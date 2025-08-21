@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'contents_admin.dart';
 import 'faq_admin.dart';
+import 'announcement_admin.dart';
+import 'reports.dart';
 
 class AdminMenuPage extends StatelessWidget {
   const AdminMenuPage({super.key});
@@ -91,6 +93,46 @@ class AdminMenuPage extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => const FAQAdminPage(),
+                    ),
+                  );
+                },
+                widthRatio: widthRatio,
+                heightRatio: heightRatio,
+              ),
+              
+              SizedBox(height: 16 * heightRatio),
+              
+              // Announcements Management button
+              _buildAdminMenuButton(
+                context: context,
+                icon: Icons.campaign_outlined,
+                title: 'Announcements',
+                description: 'Manage app announcements and notices',
+                color: const Color(0xFFf59e0b),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AnnouncementAdminPage(),
+                    ),
+                  );
+                },
+                widthRatio: widthRatio,
+                heightRatio: heightRatio,
+              ),
+              
+              SizedBox(height: 16 * heightRatio),
+              
+              // Reports Management button
+              _buildAdminMenuButton(
+                context: context,
+                icon: Icons.flag_outlined,
+                title: 'Reports',
+                description: 'Manage user reports and violations',
+                color: const Color(0xFFDC2626),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ReportsAdminPage(),
                     ),
                   );
                 },
