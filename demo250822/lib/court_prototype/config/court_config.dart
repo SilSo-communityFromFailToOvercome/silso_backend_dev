@@ -8,8 +8,8 @@ class CourtSystemConfig {
   CourtSystemConfig._internal();
 
   // === CORE SESSION MANAGEMENT ===
-  static const int maxConcurrentSessions = 3;
-  static const int sessionDurationHours = 2;
+  static const int maxConcurrentSessions = 7;
+  static const int sessionDurationMinutes = 1;
   static const int sessionAutoExtendMinutes = 15;
   static const int minParticipantsToStart = 1;
   static const int maxParticipantsPerSession = 50;
@@ -108,7 +108,7 @@ class CourtSystemConfig {
   
   // Testing overrides (only active when isTestingMode = true)
   static int get testMinVotesForPromotion => isTestingMode ? 10 : minVotesForPromotion;
-  static double get testSessionDurationHours => isTestingMode ? 0.1 : sessionDurationHours.toDouble();
+  static double get testSessionDurationMinutes => isTestingMode ? 6.0 : sessionDurationMinutes.toDouble();
   static int get testMaxConcurrentSessions => isTestingMode ? 2 : maxConcurrentSessions;
   static double get testControversyRatioMin => isTestingMode ? 30.0 : controversyRatioMin;
   static double get testControversyRatioMax => isTestingMode ? 70.0 : controversyRatioMax;
@@ -158,9 +158,9 @@ class CourtSystemConfig {
   // Get session duration based on mode
   static Duration getSessionDuration() {
     if (isTestingMode) {
-      return Duration(minutes: (testSessionDurationHours * 60).round());
+      return Duration(minutes: testSessionDurationMinutes.round());
     }
-    return Duration(hours: sessionDurationHours);
+    return Duration(minutes: sessionDurationMinutes);
   }
 
   // Get maximum concurrent sessions based on mode
@@ -194,7 +194,7 @@ class CourtSystemConfig {
     // Ensure positive values
     if (minVotesForPromotion <= 0) return false;
     if (maxConcurrentSessions <= 0) return false;
-    if (sessionDurationHours <= 0) return false;
+    if (sessionDurationMinutes <= 0) return false;
     
     // Ensure weights sum properly for promotion algorithm
     final totalWeight = voteCountWeight + controversyWeight + recencyWeight;

@@ -13,20 +13,25 @@ class KoreanAuthService {
   
   bool _isSignInInProgress = false;
 
-  // Backend server URL - automatically configured for development
+  // Backend server URL - automatically configured for development and production
   static String get _backendUrl {
-    // For Android emulator, use 10.0.2.2 (emulator's special alias to host)
-    // For real device, use the computer's local IP address
-    // You can also set this manually in environment or config
+    // Force production Firebase Functions for now
+    // TODO: Implement proper environment detection later
+    return 'https://api-3ezpz5haxq-uc.a.run.app';
     
-    // Option 1: Emulator (10.0.2.2 maps to localhost on host machine)
-    // return 'http://10.0.2.2:3001';
-    
-    // Option 2: Real device (your computer's IP on local network)
-    return 'http://172.17.204.251:3001';
-    
-    // Option 3: For production, use your actual server URL
-    // return 'https://your-production-server.com';
+    // Development configuration (commented out)
+    // if (kDebugMode) {
+    //   // Development mode - use local backend
+    //   
+    //   // Option 1: Emulator (10.0.2.2 maps to localhost on host machine)
+    //   // return 'http://10.0.2.2:3001';
+    //   
+    //   // Option 2: Real device (your computer's IP on local network)
+    //   return 'http://172.17.204.251:3001';
+    // } else {
+    //   // Production mode - use Firebase Functions (mvp2025 project)
+    //   return 'https://api-3ezpz5haxq-uc.a.run.app';
+    // }
   }
 
   // Initialize Kakao SDK

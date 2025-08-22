@@ -6,6 +6,7 @@ import 'services/court_service.dart';
 import 'services/case_service.dart';
 import 'models/case_model.dart';
 import 'models/court_session_model.dart';
+import 'models/ai_conclusion_model.dart';
 import 'screens/add_case_screen.dart';
 import 'screens/court_main.dart' as court_main;
 import 'config/court_config.dart';
@@ -1649,7 +1650,7 @@ class _VoteResultModalState extends State<VoteResultModal> {
     );
   }
 
-  // Second page: Placeholder for the AI-generated final verdict
+  // Second page: AI-generated final verdict using Gemini
   Widget _buildAiVerdictPage(double modalWidth, double modalHeight) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1658,16 +1659,120 @@ class _VoteResultModalState extends State<VoteResultModal> {
           child: _buildDocumentUi(
             width: modalWidth,
             height: modalHeight,
-            title: '최종 판결문',
-            content: const Text(
-              "판결문을 생성 중입니다...\n\n(이곳에 AI가 사건 내용과 투표 결과를 바탕으로 생성한 최종 판결문 텍스트가 표시될 예정입니다.)",
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w500,
-                height: 1.6,
-              ),
+            title: '🤖 AI 최종 판결문',
+            content: FutureBuilder<AiConclusionModel?>(
+              future: CaseService().getAiConclusion(widget.courtResult.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Column(
+                    children: [
+                      CircularProgressIndicator(color: Color(0xFF6037D0)),
+                      SizedBox(height: 16),
+                      Text(
+                        "AI가 판결문을 생성하고 있습니다...",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                
+                if (snapshot.hasError) {
+                  return Text(
+                    "판결문 생성 중 오류가 발생했습니다: ${snapshot.error}",
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 14,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                }
+                
+                final aiConclusion = snapshot.data;
+                if (aiConclusion == null) {
+                  return const Text(
+                    "아직 AI 판결문이 생성되지 않았습니다.\n\n법정이 종료된 후 잠시 후에 다시 확인해주세요.",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 14,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                      height: 1.6,
+                    ),
+                  );
+                }
+                
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // AI Verdict Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: aiConclusion.finalVerdict == 'GUILTY' 
+                              ? const Color(0xFFFF3838) 
+                              : const Color(0xFF3146E6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${aiConclusion.finalVerdict} (신뢰도: ${aiConclusion.metadata['confidence_score']}%)',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // AI Generated Summary
+                      Text(
+                        aiConclusion.summary,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w500,
+                          height: 1.6,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // AI Model Info
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.psychology, size: 16, color: Color(0xFF6037D0)),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${aiConclusion.metadata['ai_model']} • ${aiConclusion.metadata['processing_time_ms']}ms',
+                              style: const TextStyle(
+                                color: Color(0xFF666666),
+                                fontSize: 12,
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             pageInfo: '2/2'
           ),

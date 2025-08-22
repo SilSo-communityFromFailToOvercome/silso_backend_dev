@@ -255,6 +255,14 @@ class CourtService {
           await _caseService.completeCase(caseId, resultWin);
         }
       });
+
+      // Generate AI conclusion for the completed court session
+      try {
+        await _caseService.completeCourtSession(courtId);
+        debugPrint('✅ AI conclusion generation triggered for court session: $courtId');
+      } catch (e) {
+        debugPrint('⚠️ AI conclusion generation failed: ${e.toString()}');
+      }
     } catch (e) {
       throw Exception('Failed to end court session: ${e.toString()}');
     }
@@ -307,6 +315,14 @@ class CourtService {
           await _caseService.completeCase(caseId, resultWin);
         }
       });
+
+      // Generate AI conclusion for the auto-completed court session
+      try {
+        await _caseService.completeCourtSession(courtId);
+        debugPrint('✅ AI conclusion generation triggered for auto-ended session: $courtId');
+      } catch (e) {
+        debugPrint('⚠️ AI conclusion generation failed for auto-ended session: ${e.toString()}');
+      }
     } catch (e) {
       debugPrint('Auto-end session failed: ${e.toString()}');
     }
