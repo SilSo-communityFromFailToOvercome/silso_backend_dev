@@ -34,7 +34,8 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
   String _selectedSortOrder = 'Recent'; // Recent, Most Popular, Oldest
   
   // Pet selection state
-  String _selectedPetId = 'pet5'; // Default pet
+  String _selectedPetId = '5.0'; // Default pet
+  String _petNickname = '복주'; // Default pet name
   
   // Streak state
   int _currentStreak = 0;
@@ -123,7 +124,10 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
         
         if (doc.exists && doc.data()?['selectedPet'] != null) {
           setState(() {
-            _selectedPetId = doc.data()!['selectedPet'];
+            final petNumber = doc.data()!['selectedPet'];
+            final petOutfit = doc.data()?['selectedPetOutfit'] ?? 0;
+            _selectedPetId = '$petNumber.$petOutfit'; // Combine pet number and outfit
+            _petNickname = doc.data()?['NicknamePet'] ?? '복주'; // Load pet nickname
           });
         }
       }
@@ -1434,7 +1438,7 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
             borderRadius: BorderRadius.circular(16 * widthRatio),
           ),
           child: Text(
-            '복주',
+            _petNickname,
             style: TextStyle(
               fontSize: 14 * widthRatio,
               fontWeight: FontWeight.w500,

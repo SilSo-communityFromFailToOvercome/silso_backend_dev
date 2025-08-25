@@ -208,17 +208,17 @@ class _UserPageState extends State<UserPage> with SingleTickerProviderStateMixin
 
   Future<void> _loadUserCommunities() async {
     try {
-      // Get communities where user is a member
+      debugPrint('Loading communities for user: ${widget.userId}');
+      
+      // Query communities where members array contains the user ID
       final snapshot = await FirebaseFirestore.instance
-          .collection('community_members')
-          .where('userId', isEqualTo: widget.userId)
+          .collection('communities')
+          .where('members', arrayContains: widget.userId)
           .get();
 
-      final communityIds = snapshot.docs
-          .map((doc) => doc.data()['communityId'] as String)
-          .toList();
+      debugPrint('Found ${snapshot.docs.length} communities for user');
 
-      if (communityIds.isEmpty) {
+      if (snapshot.docs.isEmpty) {
         setState(() {
           _userCommunities = [];
           _isLoadingCommunities = false;
@@ -226,14 +226,15 @@ class _UserPageState extends State<UserPage> with SingleTickerProviderStateMixin
         return;
       }
 
-      // Fetch community details
+      // Convert documents to Community objects
       final communities = <Community>[];
-      for (final communityId in communityIds) {
+      for (final doc in snapshot.docs) {
         try {
-          final community = await _communityService.getCommunity(communityId);
+          final community = Community.fromMap(doc.data(), doc.id);
           communities.add(community);
+          debugPrint('Successfully loaded community: ${community.communityName}');
         } catch (e) {
-          debugPrint('Error loading community $communityId: $e');
+          debugPrint('Error parsing community ${doc.id}: $e');
         }
       }
 
@@ -241,6 +242,8 @@ class _UserPageState extends State<UserPage> with SingleTickerProviderStateMixin
         _userCommunities = communities;
         _isLoadingCommunities = false;
       });
+      
+      debugPrint('Successfully loaded ${communities.length} communities');
     } catch (e) {
       setState(() {
         _isLoadingCommunities = false;

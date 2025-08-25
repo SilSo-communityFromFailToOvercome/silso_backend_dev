@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart'; // PDF 링크를 열기 위해 패키지 추가 필요
 import '../../../services/community_service.dart';
-import 'mypet_select.dart'; // 마이팻 select
+import '../login_silpet_select/mypet_select.dart'; // 마이팻 select
 
 class PolicyAgreementScreen extends StatefulWidget {
   const PolicyAgreementScreen({super.key});
@@ -214,7 +214,7 @@ class _PolicyAgreementScreenState extends State<PolicyAgreementScreen>
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const MyPetSelect()), // 마이팻 select
+                    MaterialPageRoute(builder: (context) => const PetCreationScreen()), // 마이팻 select
                     (route) => route.settings.name == '/temporary-home',
                   );
                 },

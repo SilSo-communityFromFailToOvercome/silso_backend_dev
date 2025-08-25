@@ -24,6 +24,7 @@ import 'screens/login/phone_confirm.dart';
 import 'screens/login/category_selection_screen.dart'; 
 import 'screens/login/after_signup_splash.dart';
 import 'screens/login/policy_agreement_screen.dart';
+import 'screens/login_silpet_select/mypet_select.dart';
 
 
 void main() async {
@@ -79,6 +80,7 @@ class MyApp extends StatelessWidget {
         '/category-selection': (context) => const CategorySelectionScreen(),
         '/after-signup' : (context) => const AfterSignupSplash(), 
         '/policy-agreement': (context) => const PolicyAgreementScreen(),
+        '/pet-creation': (context) => const MyPetSelect(),
       },
     );
   }

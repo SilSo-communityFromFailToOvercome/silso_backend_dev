@@ -54,7 +54,9 @@ class _PetProfilePictureState extends State<PetProfilePicture> {
         if (doc.exists && doc.data()?['selectedPet'] != null) {
           if (mounted) {
             setState(() {
-              _selectedPetId = doc.data()!['selectedPet'];
+              final petNumber = doc.data()!['selectedPet'];
+              final petOutfit = doc.data()?['selectedPetOutfit'] ?? 0;
+              _selectedPetId = '$petNumber.$petOutfit'; // Combine pet number and outfit
               _isLoading = false;
             });
           }

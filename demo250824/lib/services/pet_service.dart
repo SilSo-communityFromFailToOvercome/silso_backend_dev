@@ -25,16 +25,18 @@ class PetService {
           .doc(user.uid)
           .get();
       
-      String petId = 'pet5'; // Default
+      String petId = '5.0'; // Default
       if (doc.exists && doc.data()?['selectedPet'] != null) {
-        petId = doc.data()!['selectedPet'];
+        final petNumber = doc.data()!['selectedPet'];
+        final petOutfit = doc.data()?['selectedPetOutfit'] ?? 0;
+        petId = '$petNumber.$petOutfit'; // Combine pet number and outfit
       }
       
       // Cache the result
       _petCache[user.uid] = petId;
       return petId;
     } catch (e) {
-      return 'pet5'; // Default on error
+      return '5.0'; // Default on error
     }
   }
   
@@ -51,16 +53,18 @@ class PetService {
           .doc(userId)
           .get();
       
-      String petId = 'pet5'; // Default
+      String petId = '5.0'; // Default
       if (doc.exists && doc.data()?['selectedPet'] != null) {
-        petId = doc.data()!['selectedPet'];
+        final petNumber = doc.data()!['selectedPet'];
+        final petOutfit = doc.data()?['selectedPetOutfit'] ?? 0;
+        petId = '$petNumber.$petOutfit'; // Combine pet number and outfit
       }
       
       // Cache the result
       _petCache[userId] = petId;
       return petId;
     } catch (e) {
-      return 'pet5'; // Default on error
+      return '5.0'; // Default on error
     }
   }
   
