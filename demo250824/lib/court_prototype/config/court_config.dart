@@ -8,10 +8,10 @@ class CourtSystemConfig {
   CourtSystemConfig._internal();
 
   // === CORE SESSION MANAGEMENT ===
-  static const int maxConcurrentSessions = 7;
-  static const int sessionDurationMinutes = 1;
+  static const int maxConcurrentSessions = 3;
+  static const int sessionDurationMinutes = 3;
   static const int sessionAutoExtendMinutes = 15;
-  static const int minParticipantsToStart = 1;
+  static const int minParticipantsToStart = 2;
   static const int maxParticipantsPerSession = 50;
   static const int sessionIdleTimeoutMinutes = 30;
 

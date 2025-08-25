@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/community_service.dart';
 import '../../services/blocking_integration_service.dart';
 import '../../models/post_model.dart';
@@ -38,6 +39,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _isLiked = false;
   int _likeCount = 0;
   bool _isLikingInProgress = false;
+  
+  // User nickname cache
+  final Map<String, String> _userNicknameCache = {};
 
   @override
   void initState() {
@@ -58,6 +62,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Future<void> _loadComments() async {
     try {
       final comments = await _blockingService.getFilteredPostComments(widget.post.postId);
+      
+      // Preload nicknames for all users (post author and comment authors)
+      final allUserIds = <String>{widget.post.userId};
+      for (final comment in comments) {
+        allUserIds.add(comment.userId);
+      }
+      
+      // Load all nicknames in parallel
+      await Future.wait(
+        allUserIds.map((userId) => _getUserNickname(userId)),
+      );
+      
       if (mounted) {
         setState(() {
           _comments = comments;
@@ -239,11 +255,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Color(0xFF121212)),
             onSelected: (value) async {
+              final displayName = widget.post.anonymous 
+                  ? '익명' 
+                  : _userNicknameCache[widget.post.userId] ?? '사용자${widget.post.userId.substring(0, 4)}';
               await BlockingUtils.handleMenuSelection(
                 context: context,
                 selectedValue: value,
                 userId: widget.post.userId,
-                username: widget.post.anonymous ? '익명' : 'User ${widget.post.userId}',
+                username: displayName,
                 onBlocked: () {
                   // Refresh the screen or navigate back
                   Navigator.of(context).pop();
@@ -341,22 +360,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 fontFamily: 'Pretendard',
                               ),
                             )
-                          : GestureDetector(
-                              onTap: () => _navigateToUserPage(
-                                widget.post.userId,
-                                '사용자${widget.post.userId.substring(0, 4)}',
-                              ),
-                              child: Text(
-                                '사용자${widget.post.userId.substring(0, 4)}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF5F37CF),
-                                  fontFamily: 'Pretendard',
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFF5F37CF),
-                                ),
-                              ),
+                          : FutureBuilder<String>(
+                              future: _getUserNickname(widget.post.userId),
+                              builder: (context, snapshot) {
+                                final displayName = snapshot.data ?? '사용자${widget.post.userId.substring(0, 4)}';
+                                return GestureDetector(
+                                  onTap: () => _navigateToUserPage(
+                                    widget.post.userId,
+                                    displayName,
+                                  ),
+                                  child: Text(
+                                    displayName,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF5F37CF),
+                                      fontFamily: 'Pretendard',
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: Color(0xFF5F37CF),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                       Row(
                         children: [
@@ -755,22 +780,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   fontFamily: 'Pretendard',
                                 ),
                               )
-                            : GestureDetector(
-                                onTap: () => _navigateToUserPage(
-                                  comment.userId,
-                                  '사용자${comment.userId.substring(0, 4)}',
-                                ),
-                                child: Text(
-                                  '사용자${comment.userId.substring(0, 4)}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF5F37CF),
-                                    fontFamily: 'Pretendard',
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: Color(0xFF5F37CF),
-                                  ),
-                                ),
+                            : FutureBuilder<String>(
+                                future: _getUserNickname(comment.userId),
+                                builder: (context, snapshot) {
+                                  final displayName = snapshot.data ?? '사용자${comment.userId.substring(0, 4)}';
+                                  return GestureDetector(
+                                    onTap: () => _navigateToUserPage(
+                                      comment.userId,
+                                      displayName,
+                                    ),
+                                    child: Text(
+                                      displayName,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF5F37CF),
+                                        fontFamily: 'Pretendard',
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Color(0xFF5F37CF),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                         const SizedBox(width: 8),
                         Text(
@@ -806,11 +837,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     color: Color(0xFF8E8E8E),
                   ),
                   onSelected: (value) async {
+                    final displayName = _userNicknameCache[comment.userId] ?? '사용자${comment.userId.substring(0, 4)}';
                     await BlockingUtils.handleMenuSelection(
                       context: context,
                       selectedValue: value,
                       userId: comment.userId,
-                      username: '사용자${comment.userId.substring(0, 4)}',
+                      username: displayName,
                       onBlocked: () {
                         // Refresh comments
                         _loadComments();
@@ -942,6 +974,38 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return '${difference.inMinutes}분 전';
     } else {
       return '방금 전';
+    }
+  }
+
+  // Fetch user nickname from Firestore
+  Future<String> _getUserNickname(String userId) async {
+    // Check cache first
+    if (_userNicknameCache.containsKey(userId)) {
+      return _userNicknameCache[userId]!;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      String nickname;
+      if (doc.exists && doc.data()?['NicknamePet'] != null) {
+        nickname = doc.data()!['NicknamePet'];
+      } else {
+        // Fallback to default format
+        nickname = '사용자${userId.substring(0, 4)}';
+      }
+      
+      // Cache the result
+      _userNicknameCache[userId] = nickname;
+      return nickname;
+    } catch (e) {
+      // Return default on error
+      final fallback = '사용자${userId.substring(0, 4)}';
+      _userNicknameCache[userId] = fallback;
+      return fallback;
     }
   }
 
