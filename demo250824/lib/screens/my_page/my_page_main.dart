@@ -60,16 +60,16 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
       // Legacy format - convert to new format
       final petNumber = petId.replaceAll('pet', '');
       final folderName = _getPetFolderName(petNumber);
-      return 'images/silpets/$folderName/$petNumber.0.png';
+      return 'assets/images/silpets/$folderName/$petNumber.0.png';
     } else {
       final parts = petId.split('.');
       if (parts.length == 2) {
         final petNumber = parts[0];
         final folderName = _getPetFolderName(petNumber);
-        return 'images/silpets/$folderName/$petId.png';
+        return 'assets/images/silpets/$folderName/$petId.png';
       } else {
         // Fallback for invalid format
-        return 'images/silpets/5_yellow/5.0.png';
+        return 'assets/images/silpets/5_yellow/5.0.png';
       }
     }
   }
@@ -417,20 +417,24 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
-              'images/silso_logo/black_silso_logo.png',
+              'assets/images/silso_logo/black_silso_logo.png',
               height: 24 * heightRatio,
               fit: BoxFit.contain,
             ),
             SizedBox(width: 8 * widthRatio),
-            Text(
-              '마이페이지',
-              style: TextStyle(
-                fontSize: 16 * widthRatio,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF8E8E8E),
-                fontFamily: 'Pretendard',
+            Flexible(
+              child: Text(
+                '마이페이지',
+                style: TextStyle(
+                  fontSize: 16 * widthRatio,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF8E8E8E),
+                  fontFamily: 'Pretendard',
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

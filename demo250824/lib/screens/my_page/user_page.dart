@@ -65,16 +65,16 @@ class _UserPageState extends State<UserPage> with SingleTickerProviderStateMixin
       // Legacy format - convert to new format
       final petNumber = petId.replaceAll('pet', '');
       final folderName = _getPetFolderName(petNumber);
-      return 'images/silpets/$folderName/$petNumber.0.png';
+      return 'assets/images/silpets/$folderName/$petNumber.0.png';
     } else {
       final parts = petId.split('.');
       if (parts.length == 2) {
         final petNumber = parts[0];
         final folderName = _getPetFolderName(petNumber);
-        return 'images/silpets/$folderName/$petId.png';
+        return 'assets/images/silpets/$folderName/$petId.png';
       } else {
         // Fallback for invalid format
-        return 'images/silpets/5_yellow/5.0.png';
+        return 'assets/images/silpets/5_yellow/5.0.png';
       }
     }
   }
@@ -447,7 +447,7 @@ class _UserPageState extends State<UserPage> with SingleTickerProviderStateMixin
         title: Row(
           children: [
             Image.asset(
-              'images/silso_logo/black_silso_logo.png',
+              'assets/images/silso_logo/black_silso_logo.png',
               height: 24 * heightRatio,
               fit: BoxFit.contain,
             ),

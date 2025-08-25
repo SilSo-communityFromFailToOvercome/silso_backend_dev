@@ -91,10 +91,10 @@ class _PetProfilePictureState extends State<PetProfilePicture> {
       final petNumber = parts[0];
       // Map pet number to folder name
       final folderName = _getPetFolderName(petNumber);
-      return 'images/silpets/$folderName/$petId.png';
+      return 'assets/images/silpets/$folderName/$petId.png';
     } else {
       // Fallback for invalid format
-      return 'images/silpets/5_yellow/5.0.png';
+      return 'assets/images/silpets/5_yellow/5.0.png';
     }
   }
 
@@ -203,10 +203,10 @@ class StaticPetProfilePicture extends StatelessWidget {
       final petNumber = parts[0];
       // Map pet number to folder name
       final folderName = _getPetFolderName(petNumber);
-      return 'images/silpets/$folderName/$petId.png';
+      return 'assets/images/silpets/$folderName/$petId.png';
     } else {
       // Fallback for invalid format
-      return 'images/silpets/5_yellow/5.0.png';
+      return 'assets/images/silpets/5_yellow/5.0.png';
     }
   }
 

@@ -100,6 +100,19 @@ flutter:
     - assets/images/silso_logo/
     - assets/images/kakao_signin/
     - assets/images/google_signin/
+    - assets/images/silpets/
+    - assets/images/silpets/1_red/
+    - assets/images/silpets/2_blue/
+    - assets/images/silpets/3_green/
+    - assets/images/silpets/4_cyan/
+    - assets/images/silpets/5_yellow/
+    - assets/images/silpets/6_green/
+    - assets/images/silpets/7_pink/
+    - assets/images/silpets/8_orange/
+    - assets/images/silpets/9_grey/
+    - assets/images/silpets/10_purple/
+    - assets/images/silpets/11_purplish/
+    - assets/images/silpets_outfit/
     - assets/images/splash/
     - assets/images/community/
     # Court prototype assets

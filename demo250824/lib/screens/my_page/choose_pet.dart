@@ -92,7 +92,7 @@ class _ChoosePetPageState extends State<ChoosePetPage> {
 
   String _buildPetImagePath(String petNumber, int outfitNumber) {
     final folderName = _getPetFolderName(petNumber);
-    return 'images/silpets/$folderName/$petNumber.$outfitNumber.png';
+    return 'assets/images/silpets/$folderName/$petNumber.$outfitNumber.png';
   }
 
   String _getPetFolderName(String petNumber) {
@@ -398,7 +398,7 @@ class _ChoosePetPageState extends State<ChoosePetPage> {
                                       ),
                                     )
                                   : Image.asset(
-                                      'images/silpets_outfit/$outfitNumber.png',
+                                      'assets/images/silpets_outfit/$outfitNumber.png',
                                       width: 50 * widthRatio,
                                       height: 50 * widthRatio,
                                       fit: BoxFit.contain,

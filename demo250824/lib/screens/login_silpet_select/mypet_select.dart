@@ -53,7 +53,7 @@ class _PetCreationScreenState extends State<PetCreationScreen> {
   // 펫 이미지 경로를 생성하는 함수
   String _buildPetImagePath(int petNumber) {
     final folderName = _getPetFolderName(petNumber);
-    return 'images/silpets/$folderName/$petNumber.0.png';
+    return 'assets/images/silpets/$folderName/$petNumber.0.png';
   }
   
   // 애니메이션 효과를 위한 투명도 값
