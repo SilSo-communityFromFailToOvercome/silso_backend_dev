@@ -13,18 +13,38 @@ class ChoosePetPage extends StatefulWidget {
 
 class _ChoosePetPageState extends State<ChoosePetPage> {
   String? selectedPetId;
+  int selectedOutfit = 0; // 0 means default (no outfit)
   bool isLoading = false;
   
-  // List of all available pets
-  final List<String> availablePets = [
-    'pet1', 'pet2', 'pet3', 'pet4', 'pet5', 'pet6',
-    'pet7', 'pet8', 'pet9', 'pet10', 'pet11'
-  ];
+  // List of all available pets (now using silpets)
+  final List<int> availablePets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  
+  // List of available outfits (based on silpets outfit folder)
+  final List<int> availableOutfits = [0, 1, 2, 3, 4, 5, 6]; // 0 = default, 1-6 = outfits
 
   @override
   void initState() {
     super.initState();
-    selectedPetId = widget.currentPetId ?? 'pet5'; // Default to pet5
+    _initializePetSelection();
+  }
+
+  void _initializePetSelection() {
+    if (widget.currentPetId != null) {
+      // Parse current pet ID to extract pet and outfit
+      final parts = widget.currentPetId!.split('.');
+      if (parts.length == 2) {
+        selectedPetId = parts[0]; // e.g., "5"
+        selectedOutfit = int.tryParse(parts[1]) ?? 0; // e.g., "4" -> 4
+      } else {
+        // Handle legacy format (e.g., "pet5")
+        final petNumber = widget.currentPetId!.replaceAll('pet', '');
+        selectedPetId = petNumber.isNotEmpty ? petNumber : '5';
+        selectedOutfit = 0;
+      }
+    } else {
+      selectedPetId = '5'; // Default to silpet 5
+      selectedOutfit = 0;
+    }
   }
 
   Future<void> _savePetSelection() async {
@@ -35,18 +55,23 @@ class _ChoosePetPageState extends State<ChoosePetPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
+        // Create the combined pet ID (e.g., "5.0" or "5.4")
+        final combinedPetId = '$selectedPetId.$selectedOutfit';
+        
         // Save pet selection to user's profile in Firestore
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .set({
-          'selectedPet': selectedPetId,
+          'selectedPet': combinedPetId,
+          'selectedPetNumber': int.parse(selectedPetId!), // Store pet number separately
+          'selectedOutfit': selectedOutfit, // Store outfit separately
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
         
         if (mounted) {
-          // Return the selected pet ID to the previous screen
-          Navigator.of(context).pop(selectedPetId);
+          // Return the combined pet ID to the previous screen
+          Navigator.of(context).pop(combinedPetId);
         }
       }
     } catch (e) {
@@ -62,6 +87,40 @@ class _ChoosePetPageState extends State<ChoosePetPage> {
       if (mounted) {
         setState(() => isLoading = false);
       }
+    }
+  }
+
+  String _buildPetImagePath(String petNumber, int outfitNumber) {
+    final folderName = _getPetFolderName(petNumber);
+    return 'images/silpets/$folderName/$petNumber.$outfitNumber.png';
+  }
+
+  String _getPetFolderName(String petNumber) {
+    switch (petNumber) {
+      case '1':
+        return '1_red';
+      case '2':
+        return '2_blue';
+      case '3':
+        return '3_green';
+      case '4':
+        return '4_cyan';
+      case '5':
+        return '5_yellow';
+      case '6':
+        return '6_green';
+      case '7':
+        return '7_pink';
+      case '8':
+        return '8_orange';
+      case '9':
+        return '9_grey';
+      case '10':
+        return '10_purple';
+      case '11':
+        return '11_purplish';
+      default:
+        return '5_yellow';
     }
   }
 
@@ -173,13 +232,13 @@ class _ChoosePetPageState extends State<ChoosePetPage> {
                 ),
                 itemCount: availablePets.length,
                 itemBuilder: (context, index) {
-                  final petId = availablePets[index];
-                  final isSelected = selectedPetId == petId;
+                  final petNumber = availablePets[index];
+                  final isSelected = selectedPetId == petNumber.toString();
                   
                   return GestureDetector(
                     onTap: () {
                       setState(() {
-                        selectedPetId = petId;
+                        selectedPetId = petNumber.toString();
                       });
                     },
                     child: Container(
@@ -205,7 +264,7 @@ class _ChoosePetPageState extends State<ChoosePetPage> {
                           // Pet Image
                           Center(
                             child: Image.asset(
-                              'images/pets/$petId.png',
+                              _buildPetImagePath(petNumber.toString(), selectedOutfit),
                               width: 80 * widthRatio,
                               height: 80 * widthRatio,
                               fit: BoxFit.contain,
@@ -254,6 +313,141 @@ class _ChoosePetPageState extends State<ChoosePetPage> {
               ),
               
               SizedBox(height: 40 * heightRatio),
+              
+              // Outfit Selection Section
+              if (selectedPetId != null) ...[
+                Text(
+                  '의상 선택',
+                  style: TextStyle(
+                    fontSize: 18 * widthRatio,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF121212),
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+                
+                SizedBox(height: 8 * heightRatio),
+                
+                Text(
+                  '선택한 펫에 입힐 의상을 고르세요',
+                  style: TextStyle(
+                    fontSize: 14 * widthRatio,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF8E8E8E),
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+                
+                SizedBox(height: 20 * heightRatio),
+                
+                // Outfit Grid
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 5,
+                    crossAxisSpacing: 12 * widthRatio,
+                    mainAxisSpacing: 12 * heightRatio,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: availableOutfits.length,
+                  itemBuilder: (context, index) {
+                    final outfitNumber = availableOutfits[index];
+                    final isSelected = selectedOutfit == outfitNumber;
+                    
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedOutfit = outfitNumber;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12 * widthRatio),
+                          border: Border.all(
+                            color: isSelected 
+                                ? const Color(0xFF5F37CF) 
+                                : const Color(0xFFE0E0E0),
+                            width: isSelected ? 3 : 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 6,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            // Outfit Image
+                            Center(
+                              child: outfitNumber == 0
+                                  ? Container(
+                                      width: 50 * widthRatio,
+                                      height: 50 * widthRatio,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF0F0F0),
+                                        borderRadius: BorderRadius.circular(25 * widthRatio),
+                                      ),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: const Color(0xFF8E8E8E),
+                                        size: 20 * widthRatio,
+                                      ),
+                                    )
+                                  : Image.asset(
+                                      'images/silpets_outfit/$outfitNumber.png',
+                                      width: 50 * widthRatio,
+                                      height: 50 * widthRatio,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          width: 50 * widthRatio,
+                                          height: 50 * widthRatio,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE8E3FF),
+                                            borderRadius: BorderRadius.circular(25 * widthRatio),
+                                          ),
+                                          child: Icon(
+                                            Icons.style,
+                                            size: 25 * widthRatio,
+                                            color: const Color(0xFF5F37CF),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                            ),
+                            
+                            // Selection Indicator
+                            if (isSelected)
+                              Positioned(
+                                top: 4 * widthRatio,
+                                right: 4 * widthRatio,
+                                child: Container(
+                                  width: 18 * widthRatio,
+                                  height: 18 * widthRatio,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF5F37CF),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 12 * widthRatio,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                
+                SizedBox(height: 40 * heightRatio),
+              ],
             ],
           ),
         ),

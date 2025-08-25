@@ -53,6 +53,55 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
     super.dispose();
   }
 
+  String _buildPetImagePath(String petId) {
+    // Parse pet ID (e.g., "5.0" or "5.4" or legacy "pet5")
+    if (petId.startsWith('pet')) {
+      // Legacy format - convert to new format
+      final petNumber = petId.replaceAll('pet', '');
+      final folderName = _getPetFolderName(petNumber);
+      return 'images/silpets/$folderName/$petNumber.0.png';
+    } else {
+      final parts = petId.split('.');
+      if (parts.length == 2) {
+        final petNumber = parts[0];
+        final folderName = _getPetFolderName(petNumber);
+        return 'images/silpets/$folderName/$petId.png';
+      } else {
+        // Fallback for invalid format
+        return 'images/silpets/5_yellow/5.0.png';
+      }
+    }
+  }
+
+  String _getPetFolderName(String petNumber) {
+    switch (petNumber) {
+      case '1':
+        return '1_red';
+      case '2':
+        return '2_blue';
+      case '3':
+        return '3_green';
+      case '4':
+        return '4_cyan';
+      case '5':
+        return '5_yellow';
+      case '6':
+        return '6_green';
+      case '7':
+        return '7_pink';
+      case '8':
+        return '8_orange';
+      case '9':
+        return '9_grey';
+      case '10':
+        return '10_purple';
+      case '11':
+        return '11_purplish';
+      default:
+        return '5_yellow';
+    }
+  }
+
   Future<void> _loadUserData() async {
     await Future.wait([
       _loadUserPosts(),
@@ -366,7 +415,7 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
         title: Row(
           children: [
             Image.asset(
-              'assets/images/silso_logo/black_silso_logo.png',
+              'images/silso_logo/black_silso_logo.png',
               height: 24 * heightRatio,
               fit: BoxFit.contain,
             ),
@@ -1349,7 +1398,7 @@ class _MyPageMainState extends State<MyPageMain> with SingleTickerProviderStateM
           height: 140 * heightRatio,
           child: Center(
             child: Image.asset(
-              'images/pets/$_selectedPetId.png',
+              _buildPetImagePath(_selectedPetId),
               width: 100 * widthRatio,
               height: 120 * heightRatio,
               fit: BoxFit.contain,
