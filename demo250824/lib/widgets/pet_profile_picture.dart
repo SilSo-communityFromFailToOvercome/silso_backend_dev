@@ -155,26 +155,29 @@ class _PetProfilePictureState extends State<PetProfilePicture> {
         shape: BoxShape.circle,
       ),
       clipBehavior: Clip.antiAlias,
-      child: Image.asset(
-        _buildPetImagePath(_selectedPetId),
-        width: widget.size,
-        height: widget.size,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: widget.size,
-            height: widget.size,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFBBBBBB),
-            ),
-            child: Icon(
-              Icons.person,
-              color: Colors.white,
-              size: widget.size * 0.5,
-            ),
-          );
-        },
+      child: Padding(
+        padding: EdgeInsets.all(widget.size * 0.05),
+        child: Image.asset(
+          _buildPetImagePath(_selectedPetId),
+          width: widget.size * 0.9,
+          height: widget.size * 0.9,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: widget.size * 0.9,
+              height: widget.size * 0.9,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFFBBBBBB),
+              ),
+              child: Icon(
+                Icons.person,
+                color: Colors.white,
+                size: widget.size * 0.4,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -243,26 +246,29 @@ class StaticPetProfilePicture extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       clipBehavior: Clip.antiAlias,
-      child: Image.asset(
-        _buildPetImagePath(petId),
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: size,
-            height: size,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFBBBBBB),
-            ),
-            child: Icon(
-              Icons.person,
-              color: Colors.white,
-              size: size * 0.5,
-            ),
-          );
-        },
+      child: Padding(
+        padding: EdgeInsets.all(size * 0.05),
+        child: Image.asset(
+          _buildPetImagePath(petId),
+          width: size * 0.9,
+          height: size * 0.9,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: size * 0.9,
+              height: size * 0.9,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFFBBBBBB),
+              ),
+              child: Icon(
+                Icons.person,
+                color: Colors.white,
+                size: size * 0.4,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
